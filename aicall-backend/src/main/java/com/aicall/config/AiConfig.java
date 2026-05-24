@@ -29,6 +29,15 @@ public class AiConfig {
     @Value("${ai.silicon-flow.vision-model}")
     private String visionModel;
 
+    @Value("${ai.qdrant.host}")
+    private String qdrantHost;
+
+    @Value("${ai.qdrant.port}")
+    private int qdrantPort;
+
+    @Value("${ai.qdrant.collection-name}")
+    private String qdrantCollectionName;
+
     @Bean
     public ChatLanguageModel chatLanguageModel() {
         return OpenAiChatModel.builder()
@@ -60,9 +69,9 @@ public class AiConfig {
     @Bean
     public EmbeddingStore<TextSegment> embeddingStore() {
         return QdrantEmbeddingStore.builder()
-                .host("localhost")
-                .port(6334)
-                .collectionName("consultation_document")
+                .host(qdrantHost)
+                .port(qdrantPort)
+                .collectionName(qdrantCollectionName)
                 .build();
     }
 }
