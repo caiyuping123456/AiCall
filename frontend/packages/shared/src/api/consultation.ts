@@ -5,7 +5,7 @@ export function register(phone: string, password: string, name?: string) {
 }
 
 export function login(phone: string, password: string) {
-  return post<{ token: string; patientId: number; phone: string }>('/user/auth/login', { phone, password });
+  return post<{ token: string; patientId: number; phone: string; profileComplete: number }>('/user/auth/login', { phone, password });
 }
 
 export function createDraft(chiefComplaint: string, department?: string) {
@@ -62,6 +62,10 @@ export function payConsultation(consultationId: number) {
 
 export function getConsultationDetail(consultationId: number) {
   return get(`/user/consultation/${consultationId}`);
+}
+
+export function getMeetings() {
+  return get('/user/consultation/meetings');
 }
 
 export function queryConsultations() {

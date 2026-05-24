@@ -9,4 +9,5 @@ public class UserLoginResponse {
     private String token;
     private Long patientId;
     private String phone;
+    private Integer profileComplete;
 }

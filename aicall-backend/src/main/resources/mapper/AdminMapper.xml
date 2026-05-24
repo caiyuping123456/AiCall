@@ -4,4 +4,8 @@
     <select id="findByUsername" resultType="com.aicall.module.admin.entity.Admin">
         SELECT * FROM admin WHERE username = #{username}
     </select>
+
+    <select id="findById" resultType="com.aicall.module.admin.entity.Admin">
+        SELECT * FROM admin WHERE id = #{id}
+    </select>
 </mapper>

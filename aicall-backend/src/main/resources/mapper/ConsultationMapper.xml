@@ -12,15 +12,21 @@
         SELECT c.id, c.consultation_no, c.patient_id, c.type, c.status, c.department,
                c.chief_complaint, c.medical_summary, c.fee, c.payment_status,
                c.scheduled_time, c.end_time, c.cancel_reason, c.reject_reason,
-               c.create_time, c.update_time,
-               p.name AS patient_name, p.age AS patient_age, p.gender AS patient_gender
+               c.minutes, c.create_time, c.update_time,
+               p.name AS patient_name, p.age AS patient_age, p.gender AS patient_gender,
+               ev.doctor_score, ev.service_score, ev.comment AS evaluation_comment
         FROM consultation c
         LEFT JOIN patient p ON c.patient_id = p.id
+        LEFT JOIN evaluation ev ON c.id = ev.consultation_id
         WHERE c.id = #{id}
     </select>
 
     <select id="findByPatientId" resultType="com.aicall.module.consultation.entity.Consultation">
         SELECT * FROM consultation WHERE patient_id = #{patientId} ORDER BY create_time DESC
+    </select>
+
+    <select id="findMeetingsByPatientId" resultType="com.aicall.module.consultation.entity.Consultation">
+        SELECT * FROM consultation WHERE patient_id = #{patientId} AND status >= 3 ORDER BY create_time DESC
     </select>
 
     <update id="updateStatus">
@@ -38,4 +44,64 @@
     <update id="updatePaymentStatus">
         UPDATE consultation SET payment_status = #{paymentStatus} WHERE id = #{id}
     </update>
+
+    <select id="findAdminPage" resultType="com.aicall.module.consultation.entity.Consultation">
+        SELECT c.id, c.consultation_no, c.patient_id, c.type, c.status, c.department,
+               c.chief_complaint, c.medical_summary, c.fee, c.payment_status,
+               c.scheduled_time, c.end_time, c.cancel_reason, c.reject_reason,
+               c.create_time, c.update_time,
+               p.name AS patient_name, p.age AS patient_age, p.gender AS patient_gender
+        FROM consultation c
+        LEFT JOIN patient p ON c.patient_id = p.id
+        <where>
+            <if test="status != null">
+                AND c.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.name LIKE CONCAT('%', #{keyword}, '%')
+                OR c.consultation_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY c.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(*)
+        FROM consultation c
+        LEFT JOIN patient p ON c.patient_id = p.id
+        <where>
+            <if test="status != null">
+                AND c.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.name LIKE CONCAT('%', #{keyword}, '%')
+                OR c.consultation_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <update id="updateCancel">
+        UPDATE consultation SET status = #{status}, cancel_reason = #{reason} WHERE id = #{id}
+    </update>
+
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT status AS `status`, COUNT(*) AS `count` FROM consultation GROUP BY status
+    </select>
+
+    <select id="countByDepartment" resultType="java.util.Map">
+        SELECT department AS `name`, COUNT(*) AS `count` FROM consultation WHERE department IS NOT NULL GROUP BY department
+    </select>
+
+    <update id="updateMinutes">
+        UPDATE consultation SET minutes = #{minutes} WHERE id = #{id}
+    </update>
+
+    <select id="countDailyTrend" resultType="java.util.Map">
+        SELECT DATE(create_time) AS `date`, COUNT(*) AS `count`
+        FROM consultation
+        WHERE create_time >= #{startDate}
+        GROUP BY DATE(create_time)
+        ORDER BY DATE(create_time)
+    </select>
 </mapper>

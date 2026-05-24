@@ -40,8 +40,14 @@ ai:
   qdrant:
     host: 192.168.178.132
     port: 6334
+    rest-port: 6333
     collection-name: consultation_document
+    knowledge-collection-name: medical_knowledge
 
 jwt:
   secret: aicall-jwt-secret-key-for-development-only-must-be-at-least-256-bits-long
-  expiration: 86400000
+  expiration: 21600000
+
+trtc:
+  sdk-app-id: 1600143811
+  secret-key: 46188fcb46ff0b26b4e0feed7cb6b4b178d8ed4d8ca1ae7e1736b3178ffae888

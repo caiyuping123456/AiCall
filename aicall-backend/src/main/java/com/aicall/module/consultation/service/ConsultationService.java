@@ -215,6 +215,10 @@ public class ConsultationService {
         return consultationMapper.findByPatientId(patientId);
     }
 
+    public List<Consultation> getMeetings(Long patientId) {
+        return consultationMapper.findMeetingsByPatientId(patientId);
+    }
+
     private void verifyOwnership(Long consultationId) {
         Consultation c = consultationMapper.findById(consultationId);
         if (c == null) throw BusinessException.fail("会诊不存在");

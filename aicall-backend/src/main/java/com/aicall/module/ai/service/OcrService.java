@@ -31,6 +31,19 @@ public class OcrService {
         );
         String result = visionModel.generate(userMessage).content().text();
         log.info("OCR result length: {}", result.length());
+
+        // Strip markdown code fences so frontend can parse the JSON directly
+        result = result.trim();
+        if (result.startsWith("```")) {
+            int start = result.indexOf("\n");
+            if (start > 0) {
+                int end = result.lastIndexOf("```");
+                if (end > start) {
+                    result = result.substring(start + 1, end).trim();
+                }
+            }
+        }
+
         return result;
     }
 }

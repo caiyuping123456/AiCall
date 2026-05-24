@@ -13,6 +13,8 @@ public class Patient {
     private String idCard;
     private String password;
     private String salt;
+    private Integer status;
+    private Integer profileComplete;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

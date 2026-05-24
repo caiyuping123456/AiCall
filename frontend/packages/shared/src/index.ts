@@ -4,7 +4,18 @@ export type { ApiResponse } from './api';
 export type { LoginRequest, LoginResponse, PaginationParams, PaginatedResult } from './types';
 
 export { formatFileSize, formatDate, formatDateTime, desensitizePhone, desensitizeName } from './utils';
+export { formatOcrLabel } from './utils/formatOcrLabel';
 
 export * from './api/consultation';
 
 export * from './api/doctor';
+
+export * from './api/admin';
+
+export * from './api/live';
+
+export * from './api/followup';
+export * from './api/evaluation';
+export * from './api/notification';
+export * from './api/profile';
+export * from './api/knowledge';

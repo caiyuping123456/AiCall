@@ -47,6 +47,6 @@ public class UserAuthService {
         }
 
         String token = jwtTokenProvider.generateToken(patient.getId(), patient.getPhone(), "PATIENT");
-        return new UserLoginResponse(token, patient.getId(), patient.getPhone());
+        return new UserLoginResponse(token, patient.getId(), patient.getPhone(), patient.getProfileComplete());
     }
 }

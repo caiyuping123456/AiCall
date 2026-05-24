@@ -5,6 +5,10 @@
         SELECT consultation_id, doctor_id, role, status, confirm_time
         FROM consultation_doctor WHERE doctor_id = #{doctorId}
     </select>
+    <select id="findByConsultationId" resultType="com.aicall.module.consultation.entity.ConsultationDoctor">
+        SELECT consultation_id, doctor_id, role, status, confirm_time
+        FROM consultation_doctor WHERE consultation_id = #{consultationId}
+    </select>
     <select id="findByConsultationAndDoctor" resultType="com.aicall.module.consultation.entity.ConsultationDoctor">
         SELECT consultation_id, doctor_id, role, status, confirm_time
         FROM consultation_doctor WHERE consultation_id = #{consultationId} AND doctor_id = #{doctorId}
@@ -13,4 +17,11 @@
         UPDATE consultation_doctor SET status = #{status}, confirm_time = NOW()
         WHERE consultation_id = #{consultationId} AND doctor_id = #{doctorId}
     </update>
+    <insert id="insert">
+        INSERT INTO consultation_doctor (consultation_id, doctor_id, role, status)
+        VALUES (#{consultationId}, #{doctorId}, #{role}, 0)
+    </insert>
+    <delete id="deleteByConsultationId">
+        DELETE FROM consultation_doctor WHERE consultation_id = #{consultationId}
+    </delete>
 </mapper>
