@@ -1,0 +1,18 @@
+# IDE
+.idea/
+
+# Backend
+aicall-backend/target/
+
+# Frontend
+frontend/node_modules/
+frontend/pnpm-lock.yaml
+frontend/packages/*/node_modules/
+frontend/packages/*/auto-imports.d.ts
+frontend/packages/*/components.d.ts
+
+# Docker
+docker/
+
+# Claude
+.claude/
