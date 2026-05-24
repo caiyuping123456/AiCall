@@ -1,0 +1,25 @@
+package com.aicall.module.consultation.entity;
+
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+public class Consultation {
+    private Long id;
+    private String consultationNo;
+    private Long patientId;
+    private Integer type;
+    private Integer status;
+    private String department;
+    private String chiefComplaint;
+    private String medicalSummary;
+    private BigDecimal fee;
+    private Integer paymentStatus;
+    private LocalDateTime scheduledTime;
+    private LocalDateTime endTime;
+    private String cancelReason;
+    private String rejectReason;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
+}
