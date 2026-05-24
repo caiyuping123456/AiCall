@@ -75,6 +75,7 @@ export interface DoctorConsultationDetail {
   patientAge: number;
   patientGender: string;
   chiefComplaint: string;
+  department: string;
   medicalSummary: string;
   status: number;
   createTime: string;
