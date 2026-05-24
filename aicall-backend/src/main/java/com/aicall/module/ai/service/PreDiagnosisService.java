@@ -77,6 +77,12 @@ public class PreDiagnosisService {
         return sb.toString();
     }
 
+    public List<ChatMessage> getHistory(Long consultationId) {
+        String key = CHAT_KEY_PREFIX + consultationId;
+        List<String> rawMessages = loadRaw(key);
+        return toChatMessages(rawMessages);
+    }
+
     @SuppressWarnings("unchecked")
     private List<String> loadRaw(String key) {
         Object obj = redisTemplate.opsForValue().get(key);
