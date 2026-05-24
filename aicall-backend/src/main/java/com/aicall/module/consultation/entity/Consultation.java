@@ -22,4 +22,9 @@ public class Consultation {
     private String rejectReason;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
+    // Fields from patient table (via JOIN)
+    private String patientName;
+    private Integer patientAge;
+    private String patientGender;
 }
