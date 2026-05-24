@@ -42,7 +42,8 @@ public class PreDiagnosisService {
 
     public ChatResponse chat(Long consultationId, String userMessage) {
         String key = CHAT_KEY_PREFIX + consultationId;
-        List<ChatMessage> messages = loadMessages(key);
+        List<String> rawMessages = loadRaw(key);
+        List<ChatMessage> messages = toChatMessages(rawMessages);
 
         if (messages.isEmpty()) {
             messages.add(SystemMessage.from(SYSTEM_PROMPT));
@@ -52,7 +53,7 @@ public class PreDiagnosisService {
 
         String aiReply = chatLanguageModel.generate(messages).content().text();
         messages.add(AiMessage.from(aiReply));
-        saveMessages(key, messages);
+        saveRaw(key, toRawList(messages));
 
         boolean finished = aiReply.contains("[DIAGNOSIS_COMPLETE]");
         if (finished) {
@@ -64,32 +65,58 @@ public class PreDiagnosisService {
 
     public String getFullConversation(Long consultationId) {
         String key = CHAT_KEY_PREFIX + consultationId;
-        List<ChatMessage> messages = loadMessages(key);
+        List<String> rawMessages = loadRaw(key);
         StringBuilder sb = new StringBuilder();
-        for (ChatMessage msg : messages) {
-            if (msg instanceof SystemMessage) continue;
-            if (msg instanceof UserMessage um) {
-                sb.append("患者：").append(um.singleText()).append("\n");
-            } else if (msg instanceof AiMessage am) {
-                sb.append("护士：").append(am.text()).append("\n");
+        for (String raw : rawMessages) {
+            if (raw.startsWith("user:")) {
+                sb.append("患者：").append(raw.substring(5)).append("\n");
+            } else if (raw.startsWith("ai:")) {
+                sb.append("护士：").append(raw.substring(3)).append("\n");
             }
         }
         return sb.toString();
     }
 
-    private List<ChatMessage> loadMessages(String key) {
+    @SuppressWarnings("unchecked")
+    private List<String> loadRaw(String key) {
         Object obj = redisTemplate.opsForValue().get(key);
         if (obj == null) return new ArrayList<>();
         if (obj instanceof List<?> list) {
-            @SuppressWarnings("unchecked")
-            List<ChatMessage> result = (List<ChatMessage>) list;
-            return new ArrayList<>(result);
+            return new ArrayList<>((List<String>) list);
         }
         return new ArrayList<>();
     }
 
-    private void saveMessages(String key, List<ChatMessage> messages) {
-        redisTemplate.opsForValue().set(key, messages, CHAT_TTL_HOURS, TimeUnit.HOURS);
+    private void saveRaw(String key, List<String> rawMessages) {
+        redisTemplate.opsForValue().set(key, rawMessages, CHAT_TTL_HOURS, TimeUnit.HOURS);
+    }
+
+    private List<String> toRawList(List<ChatMessage> messages) {
+        List<String> result = new ArrayList<>();
+        for (ChatMessage msg : messages) {
+            if (msg instanceof SystemMessage sm) {
+                result.add("system:" + sm.text());
+            } else if (msg instanceof UserMessage um) {
+                result.add("user:" + um.singleText());
+            } else if (msg instanceof AiMessage am) {
+                result.add("ai:" + am.text());
+            }
+        }
+        return result;
+    }
+
+    private List<ChatMessage> toChatMessages(List<String> rawMessages) {
+        List<ChatMessage> result = new ArrayList<>();
+        for (String raw : rawMessages) {
+            if (raw.startsWith("system:")) {
+                result.add(SystemMessage.from(raw.substring(7)));
+            } else if (raw.startsWith("user:")) {
+                result.add(UserMessage.from(raw.substring(5)));
+            } else if (raw.startsWith("ai:")) {
+                result.add(AiMessage.from(raw.substring(3)));
+            }
+        }
+        return result;
     }
 
     private void trimMessages(List<ChatMessage> messages) {
