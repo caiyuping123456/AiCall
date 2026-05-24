@@ -4,4 +4,8 @@
     <select id="findByUsername" resultType="com.aicall.module.doctor.entity.Doctor">
         SELECT * FROM doctor WHERE username = #{username}
     </select>
+    <select id="findById" resultType="com.aicall.module.doctor.entity.Doctor">
+        SELECT id, username, password, name, title, department, phone, avatar, introduction, status
+        FROM doctor WHERE id = #{id}
+    </select>
 </mapper>
