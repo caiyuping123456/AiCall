@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.consultation.mapper.ConsultationUploadMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO consultation_upload (consultation_id, file_name, file_type, file_url,
+                                          file_size, ocr_result, ai_review)
+        VALUES (#{consultationId}, #{fileName}, #{fileType}, #{fileUrl},
+                #{fileSize}, #{ocrResult}, #{aiReview})
+    </insert>
+
+    <select id="findByConsultationId" resultType="com.aicall.module.consultation.entity.ConsultationUpload">
+        SELECT * FROM consultation_upload WHERE consultation_id = #{consultationId} ORDER BY create_time
+    </select>
+
+    <select id="findById" resultType="com.aicall.module.consultation.entity.ConsultationUpload">
+        SELECT * FROM consultation_upload WHERE id = #{id}
+    </select>
+
+    <update id="updateOcrResult">
+        UPDATE consultation_upload SET ocr_result = #{ocrResult} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM consultation_upload WHERE id = #{id}
+    </delete>
+</mapper>

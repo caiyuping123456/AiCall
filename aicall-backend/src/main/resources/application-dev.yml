@@ -35,7 +35,7 @@ ai:
     api-key: sk-eejpytshnxihqbeedqsgfuixodazjxjxjetbounsqbzzygtr
     chat-model: deepseek-ai/DeepSeek-V3.2
     embedding-model: BAAI/bge-m3
-    vision-model: Qwen/Qwen2-VL-72B-Instruct
+    vision-model: Qwen/Qwen3.5-397B-A17B
 
 jwt:
   secret: aicall-jwt-secret-key-for-development-only-must-be-at-least-256-bits-long

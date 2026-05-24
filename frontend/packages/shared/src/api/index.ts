@@ -1,2 +1,2 @@
-export { get, post, put, del, default as request } from './request';
+export { get, post, put, del } from './request';
 export type { ApiResponse } from './request';

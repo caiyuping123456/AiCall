@@ -1,0 +1,7 @@
+# 启动
+docker run -d \
+  --name aicall-qdrant \
+  --restart always \
+  -p 6333:6333 \
+  -p 6334:6334 \
+  qdrant/qdrant:latest
