@@ -2,8 +2,8 @@ package com.aicall.module.user.controller;
 
 import com.aicall.common.annotation.Log;
 import com.aicall.common.result.Result;
-import com.aicall.module.user.dto.LoginByCodeRequest;
-import com.aicall.module.user.dto.SendCodeRequest;
+import com.aicall.module.user.dto.RegisterRequest;
+import com.aicall.module.user.dto.UserLoginRequest;
 import com.aicall.module.user.dto.UserLoginResponse;
 import com.aicall.module.user.service.UserAuthService;
 import jakarta.validation.Valid;
@@ -19,16 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserAuthController {
     private final UserAuthService userAuthService;
 
-    @PostMapping("/send-code")
-    @Log("用户发送验证码")
-    public Result<Void> sendCode(@Valid @RequestBody SendCodeRequest request) {
-        userAuthService.sendCode(request);
+    @PostMapping("/register")
+    @Log("用户注册")
+    public Result<Void> register(@Valid @RequestBody RegisterRequest request) {
+        userAuthService.register(request);
         return Result.success();
     }
 
     @PostMapping("/login")
-    @Log("用户验证码登录")
-    public Result<UserLoginResponse> login(@Valid @RequestBody LoginByCodeRequest request) {
+    @Log("用户登录")
+    public Result<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
         return Result.success(userAuthService.login(request));
     }
 }

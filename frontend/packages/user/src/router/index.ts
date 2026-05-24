@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 import Home from '@/views/Home.vue';
 import Login from '@/views/Login.vue';
+import Register from '@/views/Register.vue';
 import Start from '@/views/consultation/Start.vue';
 import Chat from '@/views/consultation/Chat.vue';
 import Form from '@/views/consultation/Form.vue';
@@ -13,6 +14,7 @@ import Query from '@/views/consultation/Query.vue';
 
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'Login', component: Login, meta: { title: '登录' } },
+  { path: '/register', name: 'Register', component: Register, meta: { title: '注册' } },
   { path: '/', name: 'Home', component: Home, meta: { title: '首页', requiresAuth: true } },
   { path: '/consultation/start', name: 'Start', component: Start, meta: { title: '选择预问诊方式', requiresAuth: true } },
   { path: '/consultation/:id/chat', name: 'Chat', component: Chat, meta: { title: 'AI预问诊', requiresAuth: true } },

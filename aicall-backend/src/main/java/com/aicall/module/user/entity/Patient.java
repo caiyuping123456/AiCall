@@ -11,6 +11,8 @@ public class Patient {
     private Integer gender;
     private Integer age;
     private String idCard;
+    private String password;
+    private String salt;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

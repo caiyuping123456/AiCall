@@ -1,11 +1,11 @@
 import { get, post, put, del } from './request';
 
-export function sendCode(phone: string) {
-  return post('/user/auth/send-code', { phone });
+export function register(phone: string, password: string, name?: string) {
+  return post('/user/auth/register', { phone, password, name });
 }
 
-export function loginByCode(phone: string, code: string) {
-  return post<{ token: string; patientId: number; phone: string }>('/user/auth/login', { phone, code });
+export function login(phone: string, password: string) {
+  return post<{ token: string; patientId: number; phone: string }>('/user/auth/login', { phone, password });
 }
 
 export function createDraft(chiefComplaint: string, department?: string) {

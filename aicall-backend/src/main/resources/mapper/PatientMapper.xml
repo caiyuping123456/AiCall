@@ -6,7 +6,7 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO patient (name, phone, gender, age, id_card)
-        VALUES (#{name}, #{phone}, #{gender}, #{age}, #{idCard})
+        INSERT INTO patient (name, phone, gender, age, id_card, password, salt)
+        VALUES (#{name}, #{phone}, #{gender}, #{age}, #{idCard}, #{password}, #{salt})
     </insert>
 </mapper>
