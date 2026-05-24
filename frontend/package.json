@@ -1,0 +1,21 @@
+{
+  "name": "aicall-frontend",
+  "private": true,
+  "scripts": {
+    "dev:user": "pnpm -C packages/user dev",
+    "dev:doctor": "pnpm -C packages/doctor dev",
+    "dev:admin": "pnpm -C packages/admin dev",
+    "build:user": "pnpm -C packages/user build",
+    "build:doctor": "pnpm -C packages/doctor build",
+    "build:admin": "pnpm -C packages/admin build",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"packages/**/*.{ts,vue,js,json,css}\""
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.28.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "prettier": "^3.3.0"
+  }
+}
