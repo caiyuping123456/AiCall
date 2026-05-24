@@ -112,7 +112,7 @@ public class DoctorConsultationService {
         vo.setConsultationId(c.getId());
         vo.setPatientName(c.getPatientName());
         vo.setPatientAge(c.getPatientAge());
-        vo.setPatientGender(c.getPatientGender() != null ? (c.getPatientGender() == 1 ? "男" : "女") : null);
+        vo.setPatientGender(c.getPatientGender() != null ? ("1".equals(c.getPatientGender()) ? "男" : "女") : null);
         vo.setChiefComplaint(c.getChiefComplaint());
         vo.setMedicalSummary(c.getMedicalSummary());
         vo.setStatus(c.getStatus());

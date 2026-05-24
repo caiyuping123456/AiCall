@@ -36,9 +36,9 @@ ai:
     api-key: sk-eejpytshnxihqbeedqsgfuixodazjxjxjetbounsqbzzygtr
     chat-model: deepseek-ai/DeepSeek-V3.2
     embedding-model: BAAI/bge-m3
-    vision-model: Qwen/Qwen2-VL-72B-Instruct
+    vision-model: Qwen/Qwen3.6-35B-A3B
   qdrant:
-    host: localhost
+    host: 192.168.178.132
     port: 6334
     collection-name: consultation_document
 

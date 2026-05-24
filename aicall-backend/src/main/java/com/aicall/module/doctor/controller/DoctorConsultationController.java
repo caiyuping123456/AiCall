@@ -3,6 +3,7 @@ package com.aicall.module.doctor.controller;
 import com.aicall.common.result.Result;
 import com.aicall.module.doctor.dto.*;
 import com.aicall.module.doctor.service.DoctorConsultationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;

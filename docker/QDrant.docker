@@ -1,7 +1,7 @@
-# 启动
 docker run -d \
-  --name aicall-qdrant \
-  --restart always \
+  --name qdrant \
   -p 6333:6333 \
   -p 6334:6334 \
+  -v /home/caiyuping/Desktop/qdrant:/qdrant/storage \
+  --restart unless-stopped \
   qdrant/qdrant:latest
