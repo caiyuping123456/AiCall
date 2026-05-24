@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.consultation.mapper.ReportMapper">
+    <select id="findById" resultType="com.aicall.module.consultation.entity.Report">
+        SELECT id, consultation_id, type, content, pdf_url, status, signed_by, signed_time, template_id, create_time, update_time
+        FROM report WHERE id = #{id}
+    </select>
+    <select id="findByConsultationId" resultType="com.aicall.module.consultation.entity.Report">
+        SELECT id, consultation_id, type, content, pdf_url, status, signed_by, signed_time, template_id, create_time, update_time
+        FROM report WHERE consultation_id = #{consultationId}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO report (consultation_id, type, content, status, template_id, create_time, update_time)
+        VALUES (#{consultationId}, #{type}, #{content}, #{status}, #{templateId}, NOW(), NOW())
+    </insert>
+    <update id="updateContent">
+        UPDATE report SET content = #{content}, update_time = NOW() WHERE id = #{id}
+    </update>
+    <update id="updateStatus">
+        UPDATE report SET status = #{status}, update_time = NOW() WHERE id = #{id}
+    </update>
+    <update id="updateSign">
+        UPDATE report SET status = #{status}, signed_by = #{signedBy}, signed_time = NOW(), update_time = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper>
