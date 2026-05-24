@@ -6,3 +6,5 @@ export type { LoginRequest, LoginResponse, PaginationParams, PaginatedResult } f
 export { formatFileSize, formatDate, formatDateTime, desensitizePhone, desensitizeName } from './utils';
 
 export * from './api/consultation';
+
+export * from './api/doctor';
