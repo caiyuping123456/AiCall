@@ -21,6 +21,10 @@ public class BusinessException extends RuntimeException {
         return new BusinessException(ResultCode.INTERNAL_ERROR.getCode(), message);
     }
 
+    public static BusinessException fail(int code, String message) {
+        return new BusinessException(code, message);
+    }
+
     public static BusinessException fail(ResultCode resultCode) {
         return new BusinessException(resultCode);
     }
