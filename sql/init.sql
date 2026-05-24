@@ -401,3 +401,9 @@ INSERT INTO `sys_config` (`config_key`, `config_value`, `remark`) VALUES
 -- 报告模板
 INSERT INTO `report_template` (`id`, `name`, `department`, `content_template`) VALUES
 (1, '通用会诊报告模板', NULL, '{"sections":[{"title":"会诊经过","key":"process"},{"title":"诊断分析讨论","key":"analysis"},{"title":"最终诊断","key":"diagnosis"},{"title":"治疗建议","key":"suggestion"}]}');
+
+-- 报告模板种子数据
+INSERT INTO report_template (name, department, content_template, status) VALUES
+('内科会诊报告模板', '内科', '{"sections": ["chiefComplaint", "presentIllness", "pastHistory", "examinationFindings", "diagnosis", "analysis", "recommendation", "followUp"]}', 1),
+('外科会诊报告模板', '外科', '{"sections": ["chiefComplaint", "presentIllness", "pastHistory", "examinationFindings", "diagnosis", "analysis", "recommendation", "followUp"]}', 1),
+('通用会诊报告模板', '其他', '{"sections": ["chiefComplaint", "presentIllness", "pastHistory", "examinationFindings", "diagnosis", "analysis", "recommendation", "followUp"]}', 1);
