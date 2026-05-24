@@ -39,7 +39,9 @@ export function uploadFile(consultationId: number, file: File, fileType: number 
   const formData = new FormData();
   formData.append('file', file);
   formData.append('fileType', String(fileType));
-  return post(`/user/consultation/${consultationId}/upload`, formData);
+  return post(`/user/consultation/${consultationId}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }
 
 export function getUploads(consultationId: number) {

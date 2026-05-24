@@ -126,7 +126,7 @@ public class ConsultationService {
             upload.setFileSize(file.getSize());
             consultationUploadMapper.insert(upload);
 
-            Thread.ofVirtual().start(() -> {
+            new Thread(() -> {
                 try {
                     String base64 = java.util.Base64.getEncoder().encodeToString(file.getBytes());
                     String ocrResult = ocrService.recognize(base64);
@@ -135,7 +135,7 @@ public class ConsultationService {
                 } catch (Exception e) {
                     log.error("OCR failed for upload {}: {}", upload.getId(), e.getMessage());
                 }
-            });
+            }).start();
 
             return upload;
         } catch (Exception e) {

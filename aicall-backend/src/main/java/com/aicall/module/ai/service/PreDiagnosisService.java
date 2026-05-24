@@ -71,7 +71,7 @@ public class PreDiagnosisService {
             if (msg instanceof UserMessage um) {
                 sb.append("患者：").append(um.singleText()).append("\n");
             } else if (msg instanceof AiMessage am) {
-                sb.append("护士：").append(am.singleText()).append("\n");
+                sb.append("护士：").append(am.text()).append("\n");
             }
         }
         return sb.toString();

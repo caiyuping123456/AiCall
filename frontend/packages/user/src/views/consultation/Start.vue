@@ -27,7 +27,7 @@ const router = useRouter();
 
 async function startChat() {
   try {
-    const id = await createDraft('');
+    const id = await createDraft('待补充');
     router.push(`/consultation/${id}/chat`);
   } catch (e: any) {
     showToast(e.message || '创建失败');
@@ -36,7 +36,7 @@ async function startChat() {
 
 async function startForm() {
   try {
-    const id = await createDraft('');
+    const id = await createDraft('待补充');
     router.push(`/consultation/${id}/form`);
   } catch (e: any) {
     showToast(e.message || '创建失败');

@@ -31,6 +31,6 @@ public class SummaryService {
 
     public String generateSummary(String content) {
         String prompt = String.format(SUMMARY_PROMPT, content);
-        return chatLanguageModel.generate(prompt).content().text();
+        return chatLanguageModel.generate(prompt);
     }
 }
