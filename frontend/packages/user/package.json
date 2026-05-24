@@ -12,6 +12,7 @@
   "dependencies": {
     "vue": "^3.5.0",
     "vue-router": "^4.4.0",
+    "trtc-js-sdk": "^4.15.0",
     "vant": "^4.9.0",
     "@aicall/shared": "workspace:*"
   },

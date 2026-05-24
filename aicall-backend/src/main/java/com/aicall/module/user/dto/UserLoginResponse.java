@@ -8,5 +8,7 @@ import lombok.Data;
 public class UserLoginResponse {
     private String token;
     private Long patientId;
+    private String patientName;
     private String phone;
+    private Integer profileComplete;
 }

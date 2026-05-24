@@ -5,4 +5,18 @@
         INSERT INTO payment_order (order_no, consultation_id, amount, status, pay_time)
         VALUES (#{orderNo}, #{consultationId}, #{amount}, #{status}, #{payTime})
     </insert>
+
+    <select id="sumAmountByStatus" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM payment_order
+        WHERE status = #{status}
+    </select>
+
+    <select id="sumDailyRevenue" resultType="java.util.Map">
+        SELECT DATE(pay_time) AS date, COALESCE(SUM(amount), 0) AS amount
+        FROM payment_order
+        WHERE status = 1 AND pay_time >= #{startDate}
+        GROUP BY DATE(pay_time)
+        ORDER BY DATE(pay_time)
+    </select>
 </mapper>

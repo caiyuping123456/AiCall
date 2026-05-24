@@ -8,8 +8,11 @@ import com.aicall.module.ai.service.SummaryService;
 import com.aicall.module.consultation.dto.*;
 import com.aicall.module.consultation.entity.Consultation;
 import com.aicall.module.consultation.entity.ConsultationUpload;
+import com.aicall.module.consultation.mapper.ConsultationDoctorMapper;
 import com.aicall.module.consultation.mapper.ConsultationMapper;
 import com.aicall.module.consultation.mapper.ConsultationUploadMapper;
+import com.aicall.module.doctor.mapper.DoctorMapper;
+import com.aicall.module.doctor.entity.Doctor;
 import com.aicall.module.payment.entity.PaymentOrder;
 import com.aicall.module.payment.mapper.PaymentOrderMapper;
 import com.aicall.infrastructure.storage.MinioStorageService;
@@ -36,6 +39,8 @@ public class ConsultationService {
 
     private final ConsultationMapper consultationMapper;
     private final ConsultationUploadMapper consultationUploadMapper;
+    private final ConsultationDoctorMapper consultationDoctorMapper;
+    private final DoctorMapper doctorMapper;
     private final PaymentOrderMapper paymentOrderMapper;
     private final PreDiagnosisService preDiagnosisService;
     private final SummaryService summaryService;
@@ -197,6 +202,13 @@ public class ConsultationService {
         vo.setPaymentStatus(c.getPaymentStatus());
         vo.setCreateTime(c.getCreateTime());
 
+        consultationDoctorMapper.findByConsultationId(consultationId).stream()
+            .filter(cd -> cd.getStatus() == 1)
+            .findFirst().ifPresent(cd -> {
+                Doctor d = doctorMapper.findById(cd.getDoctorId());
+                if (d != null) { vo.setDoctorName(d.getName()); vo.setDoctorTitle(d.getTitle()); }
+            });
+
         List<ConsultationUpload> uploads = consultationUploadMapper.findByConsultationId(consultationId);
         vo.setUploads(uploads.stream().map(u -> {
             ConsultationDetailVO.UploadItem item = new ConsultationDetailVO.UploadItem();
@@ -213,6 +225,10 @@ public class ConsultationService {
 
     public List<Consultation> queryByPatientId(Long patientId) {
         return consultationMapper.findByPatientId(patientId);
+    }
+
+    public List<Consultation> getMeetings(Long patientId) {
+        return consultationMapper.findMeetingsByPatientId(patientId);
     }
 
     private void verifyOwnership(Long consultationId) {

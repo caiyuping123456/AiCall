@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.evaluation.mapper.EvaluationMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO evaluation (consultation_id, patient_id) VALUES (#{consultationId}, #{patientId})
+    </insert>
+
+    <select id="findByConsultationId" resultType="com.aicall.module.evaluation.entity.Evaluation">
+        SELECT e.*, c.consultation_no FROM evaluation e
+        LEFT JOIN consultation c ON e.consultation_id = c.id
+        WHERE e.consultation_id = #{consultationId}
+    </select>
+
+    <select id="findPendingByPatientId" resultType="com.aicall.module.evaluation.entity.Evaluation">
+        SELECT e.*, c.consultation_no FROM evaluation e
+        LEFT JOIN consultation c ON e.consultation_id = c.id
+        WHERE e.patient_id = #{patientId} AND e.doctor_score IS NULL
+        ORDER BY e.create_time DESC
+    </select>
+
+    <update id="updateScore">
+        UPDATE evaluation SET doctor_score = #{doctorScore}, service_score = #{serviceScore},
+        comment = #{comment} WHERE id = #{id}
+    </update>
+</mapper>

@@ -101,6 +101,13 @@ public class UserConsultationController {
         return Result.success(consultationService.getDetail(id));
     }
 
+    @GetMapping("/meetings")
+    @Log("查询我的会诊")
+    public Result<List<Consultation>> meetings() {
+        Long patientId = getCurrentPatientId();
+        return Result.success(consultationService.getMeetings(patientId));
+    }
+
     @GetMapping("/query")
     @Log("查询会诊列表")
     public Result<List<Consultation>> query() {
@@ -110,6 +117,9 @@ public class UserConsultationController {
 
     private Long getCurrentPatientId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return Long.parseLong(auth.getName());
+        if (auth != null && auth.getPrincipal() instanceof Long patientId) {
+            return patientId;
+        }
+        throw new com.aicall.common.exception.BusinessException(com.aicall.common.result.ResultCode.UNAUTHORIZED);
     }
 }

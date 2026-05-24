@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS `patient` (
     `id_card` VARCHAR(18) DEFAULT NULL COMMENT '身份证号',
     `password` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '密码(MD5+盐)',
     `salt` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '密码盐',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态 0禁用1启用',
+    `profile_complete` TINYINT NOT NULL DEFAULT 0 COMMENT '资料完整 0未完成1已完成',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -85,6 +87,7 @@ CREATE TABLE IF NOT EXISTS `consultation` (
     `end_time` DATETIME DEFAULT NULL COMMENT '结束时间',
     `cancel_reason` VARCHAR(500) DEFAULT NULL COMMENT '取消原因',
     `reject_reason` VARCHAR(500) DEFAULT NULL COMMENT '退回原因',
+    `minutes` TEXT DEFAULT NULL COMMENT '会议纪要',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -247,6 +250,17 @@ CREATE TABLE IF NOT EXISTS `live_recording` (
     INDEX `idx_room` (`room_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='录制文件';
 
+CREATE TABLE IF NOT EXISTS `live_subtitle` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `room_id` BIGINT NOT NULL COMMENT '会诊室ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `user_name` VARCHAR(50) DEFAULT NULL COMMENT '用户名',
+    `content` TEXT NOT NULL COMMENT '字幕内容',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX `idx_room` (`room_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='实时字幕记录';
+
 -- =============================================
 -- 管理与系统
 -- =============================================
@@ -352,6 +366,36 @@ CREATE TABLE IF NOT EXISTS `evaluation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评价';
 
 -- =============================================
+-- 科室管理
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS `department` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(50) NOT NULL COMMENT '科室名称',
+    `description` VARCHAR(200) DEFAULT NULL COMMENT '描述',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态 0禁用1启用',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='科室表';
+
+-- =============================================
+-- 医学知识库
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS `medical_document` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `file_name` VARCHAR(200) NOT NULL COMMENT '源文件名',
+    `file_url` VARCHAR(500) DEFAULT NULL COMMENT 'MinIO文件URL',
+    `content` TEXT DEFAULT NULL COMMENT '解析后的文本内容',
+    `chunk_count` INT DEFAULT 0 COMMENT '分块数量',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态 0已删除1正常',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医学知识文档';
+
+-- =============================================
 -- 初始数据
 -- =============================================
 
@@ -397,6 +441,14 @@ INSERT INTO `sys_config` (`config_key`, `config_value`, `remark`) VALUES
 ('platform_service_rate', '0.10', '平台服务费比例'),
 ('follow_up_days', '3,7,30', '随访天数'),
 ('consultation_timeout_hours', '48', '会诊超时时间(小时)');
+
+-- 科室种子数据(从现有医生科室提取)
+INSERT INTO `department` (`name`, `description`) VALUES
+('肿瘤内科', '肿瘤内科相关疾病'),
+('外科', '外科相关疾病'),
+('放射科', '放射科相关疾病'),
+('心血管内科', '心血管内科相关疾病'),
+('病理科', '病理科相关疾病');
 
 -- 报告模板
 INSERT INTO `report_template` (`id`, `name`, `department`, `content_template`) VALUES

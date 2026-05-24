@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.notification.mapper.NotificationMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notification (user_type, user_id, phone, type, title, content, status, send_time)
+        VALUES (#{userType}, #{userId}, #{phone}, #{type}, #{title}, #{content}, #{status}, #{sendTime})
+    </insert>
+
+    <select id="findByUserId" resultType="com.aicall.module.notification.entity.Notification">
+        SELECT * FROM notification WHERE user_type = #{userType} AND user_id = #{userId}
+        ORDER BY create_time DESC LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*) FROM notification WHERE user_type = #{userType} AND user_id = #{userId}
+    </select>
+
+    <select id="countUnread" resultType="long">
+        SELECT COUNT(*) FROM notification WHERE user_type = #{userType} AND user_id = #{userId} AND status = 1
+    </select>
+
+    <update id="updateStatus">
+        UPDATE notification SET status = #{status} WHERE id = #{id}
+    </update>
+</mapper>

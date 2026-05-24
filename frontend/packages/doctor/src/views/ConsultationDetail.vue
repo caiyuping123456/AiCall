@@ -13,6 +13,12 @@
       <div style="margin-bottom: 16px" v-if="detail.status === 4 && detail.report?.status === 0">
         <el-button type="primary" @click="router.push(`/consultations/${id}/report`)">编辑报告</el-button>
       </div>
+      <div style="margin-bottom: 16px" v-if="detail.status === 3 || detail.status === 4 || detail.status === 5">
+        <el-button v-if="detail.status !== 5" type="success" @click="router.push(`/consultations/${id}/room`)">
+          进入会诊室
+        </el-button>
+        <el-tag v-else type="warning" size="large">会诊进行中</el-tag>
+      </div>
 
       <el-tabs>
         <el-tab-pane label="患者信息">
@@ -38,7 +44,7 @@
               </template>
             </el-table-column>
             <el-table-column label="OCR结果" min-width="200">
-              <template #default="{ row }">{{ row.ocrResult || '无' }}</template>
+              <template #default="{ row }">{{ formatOcrLabel(row.ocrResult) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="100">
               <template #default="{ row }">
@@ -71,6 +77,28 @@
             查看完整报告
           </el-button>
         </el-tab-pane>
+
+        <el-tab-pane label="随访记录">
+          <el-table :data="followUps" stripe v-loading="followUpLoading">
+            <el-table-column label="随访天数">
+              <template #default="{ row }">第{{ row.planDay }}天</template>
+            </el-table-column>
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="['info', '', 'success', 'danger'][row.status] || 'info'" size="small">
+                  {{ ['待发送', '已发送', '已回复', '异常'][row.status] || '未知' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="sendTime" label="发送时间" width="160" />
+            <el-table-column prop="answerTime" label="回复时间" width="160" />
+            <el-table-column label="操作" width="100">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="showFollowUpDetail(row)">查看</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
       </el-tabs>
     </template>
 
@@ -87,8 +115,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { getDoctorConsultationDetail, confirmConsultation, rejectConsultation, generateReport, type DoctorConsultationDetail } from '@aicall/shared';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { getDoctorConsultationDetail, confirmConsultation, rejectConsultation, generateReport, getDoctorFollowUps, type DoctorConsultationDetail, formatOcrLabel } from '@aicall/shared';
 
 const route = useRoute();
 const router = useRouter();
@@ -98,6 +126,8 @@ const actionLoading = ref(false);
 const detail = ref<DoctorConsultationDetail | null>(null);
 const showRejectDialog = ref(false);
 const rejectReason = ref('');
+const followUps = ref<any[]>([]);
+const followUpLoading = ref(false);
 
 onMounted(() => loadData());
 
@@ -105,6 +135,7 @@ async function loadData() {
   loading.value = true;
   try {
     detail.value = await getDoctorConsultationDetail(id);
+    loadFollowUps();
   } catch (e: any) {
     ElMessage.error(e.message || '加载失败');
   } finally {
@@ -154,5 +185,22 @@ async function handleGenerateReport() {
   } finally {
     actionLoading.value = false;
   }
+}
+
+async function loadFollowUps() {
+  followUpLoading.value = true;
+  try {
+    followUps.value = await getDoctorFollowUps(id);
+  } catch { /* optional */ }
+  finally { followUpLoading.value = false; }
+}
+
+function showFollowUpDetail(row: any) {
+  ElMessageBox.alert(
+    '问卷：' + (row.questionnaire || '无') + '\n\n回答：' + (row.answer || '暂无') +
+    '\n\nAI分析：' + (row.aiAnalysis || '暂无'),
+    '第' + row.planDay + '天随访详情',
+    { confirmButtonText: '关闭' }
+  );
 }
 </script>

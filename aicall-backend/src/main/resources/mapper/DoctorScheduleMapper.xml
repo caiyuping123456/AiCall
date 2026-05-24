@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.doctor.mapper.DoctorScheduleMapper">
+    <select id="findByDoctorIdAndDate" resultType="com.aicall.module.doctor.entity.DoctorSchedule">
+        SELECT *
+        FROM doctor_schedule
+        WHERE doctor_id = #{doctorId}
+        <if test="date != null">
+            AND schedule_date = #{date}
+        </if>
+        ORDER BY schedule_date DESC, start_time ASC
+    </select>
+
+    <select id="findRecentByDoctorId" resultType="com.aicall.module.doctor.entity.DoctorSchedule">
+        SELECT * FROM doctor_schedule WHERE doctor_id = #{doctorId}
+        ORDER BY schedule_date DESC, start_time ASC LIMIT #{limit}
+    </select>
+
+    <select id="findById" resultType="com.aicall.module.doctor.entity.DoctorSchedule">
+        SELECT * FROM doctor_schedule WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO doctor_schedule (doctor_id, schedule_date, start_time, end_time, status)
+        VALUES (#{doctorId}, #{scheduleDate}, #{startTime}, #{endTime}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE doctor_schedule
+        SET schedule_date = #{scheduleDate}, start_time = #{startTime}, end_time = #{endTime}, status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM doctor_schedule WHERE id = #{id}
+    </delete>
+</mapper>

@@ -14,6 +14,8 @@ public class ConsultationDetailVO {
     private String department;
     private String chiefComplaint;
     private String medicalSummary;
+    private String doctorName;
+    private String doctorTitle;
     private BigDecimal fee;
     private Integer paymentStatus;
     private LocalDateTime createTime;

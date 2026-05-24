@@ -24,6 +24,9 @@ instance.interceptors.request.use((config) => {
 
 instance.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
+    if (response.config.responseType === 'blob') {
+      return response.data as any;
+    }
     const { code, message, data } = response.data;
     if (code !== 200) {
       return Promise.reject(new Error(message || '请求失败'));

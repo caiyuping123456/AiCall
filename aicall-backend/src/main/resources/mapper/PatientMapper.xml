@@ -5,8 +5,45 @@
         SELECT * FROM patient WHERE phone = #{phone}
     </select>
 
+    <select id="findById" resultType="com.aicall.module.user.entity.Patient">
+        SELECT * FROM patient WHERE id = #{id}
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO patient (name, phone, gender, age, id_card, password, salt)
-        VALUES (#{name}, #{phone}, #{gender}, #{age}, #{idCard}, #{password}, #{salt})
+        INSERT INTO patient (name, phone, gender, age, id_card, password, salt, status, profile_complete)
+        VALUES (#{name}, #{phone}, #{gender}, #{age}, #{idCard}, #{password}, #{salt}, 1, 0)
     </insert>
+
+    <update id="updateProfile">
+        UPDATE patient SET name = #{name}, age = #{age}, gender = #{gender}, profile_complete = 1
+        WHERE id = #{id}
+    </update>
+
+    <select id="findAdminPage" resultType="com.aicall.module.user.entity.Patient">
+        SELECT * FROM patient
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%') OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(*) FROM patient
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%') OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <update id="updateStatus">
+        UPDATE patient SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updatePassword">
+        UPDATE patient SET password = #{password}, salt = #{salt} WHERE id = #{id}
+    </update>
 </mapper>

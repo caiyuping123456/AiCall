@@ -1,5 +1,6 @@
 package com.aicall.config;
 
+import com.aicall.infrastructure.storage.QdrantRestClient;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.ExecutionException;
@@ -45,8 +47,14 @@ public class AiConfig {
     @Value("${ai.qdrant.port}")
     private int qdrantPort;
 
+    @Value("${ai.qdrant.rest-port}")
+    private int qdrantRestPort;
+
     @Value("${ai.qdrant.collection-name}")
     private String qdrantCollectionName;
+
+    @Value("${ai.qdrant.knowledge-collection-name:medical_knowledge}")
+    private String knowledgeCollectionName;
 
     @Bean
     public ChatLanguageModel chatLanguageModel() {
@@ -77,6 +85,25 @@ public class AiConfig {
     }
 
     @Bean
+    public QdrantRestClient qdrantRestClient() {
+        return new QdrantRestClient(qdrantHost, qdrantRestPort);
+    }
+
+    @Bean
+    @Qualifier("consultationCollectionName")
+    public String consultationCollectionName() {
+        return qdrantCollectionName;
+    }
+
+    @Bean
+    @Qualifier("knowledgeCollectionName")
+    public String knowledgeCollectionName() {
+        return knowledgeCollectionName;
+    }
+
+    @Bean
+    @Primary
+    @Qualifier("consultationEmbeddingStore")
     public EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel) {
         int dimension = embeddingModel.embed("test").content().dimension();
         ensureCollection(dimension);
@@ -84,6 +111,18 @@ public class AiConfig {
                 .host(qdrantHost)
                 .port(qdrantPort)
                 .collectionName(qdrantCollectionName)
+                .build();
+    }
+
+    @Bean
+    @Qualifier("knowledgeEmbeddingStore")
+    public EmbeddingStore<TextSegment> knowledgeEmbeddingStore(EmbeddingModel embeddingModel) {
+        int dimension = embeddingModel.embed("test").content().dimension();
+        ensureKnowledgeCollection(dimension);
+        return QdrantEmbeddingStore.builder()
+                .host(qdrantHost)
+                .port(qdrantPort)
+                .collectionName(knowledgeCollectionName)
                 .build();
     }
 
@@ -112,6 +151,35 @@ public class AiConfig {
                 log.info("Collection '{}' created successfully", qdrantCollectionName);
             } catch (Exception ex) {
                 log.warn("Failed to create collection: {}", ex.getMessage());
+            }
+        }
+    }
+
+    private void ensureKnowledgeCollection(int vectorSize) {
+        try (QdrantGrpcClient grpcClient = QdrantGrpcClient.newBuilder(qdrantHost, qdrantPort, false).build()) {
+            QdrantClient client = new QdrantClient(grpcClient);
+            boolean exists = client.getCollectionInfoAsync(knowledgeCollectionName).get() != null;
+            if (!exists) {
+                // never reached — exception thrown if not found
+            }
+        } catch (Exception e) {
+            log.info("Collection '{}' not found, creating with vectorSize={}...", knowledgeCollectionName, vectorSize);
+            try (QdrantGrpcClient grpcClient = QdrantGrpcClient.newBuilder(qdrantHost, qdrantPort, false).build()) {
+                QdrantClient client = new QdrantClient(grpcClient);
+                client.createCollectionAsync(
+                        CreateCollection.newBuilder()
+                                .setCollectionName(knowledgeCollectionName)
+                                .setVectorsConfig(VectorsConfig.newBuilder()
+                                        .setParams(VectorParams.newBuilder()
+                                                .setSize(vectorSize)
+                                                .setDistance(Distance.Cosine)
+                                                .build())
+                                        .build())
+                                .build()
+                ).get();
+                log.info("Collection '{}' created successfully", knowledgeCollectionName);
+            } catch (Exception ex) {
+                log.warn("Failed to create knowledge collection: {}", ex.getMessage());
             }
         }
     }

@@ -42,8 +42,14 @@ async function handleLogin() {
     const res = await login(phone.value, password.value);
     localStorage.setItem('token', res.token);
     localStorage.setItem('patientId', String(res.patientId));
+    localStorage.setItem('patientName', res.patientName || '');
+    localStorage.setItem('profileComplete', String(res.profileComplete ?? 0));
     showToast('登录成功');
-    router.push('/');
+    if (res.profileComplete === 1) {
+      router.push('/');
+    } else {
+      router.push('/profile/complete');
+    }
   } catch (e: any) {
     showToast(e.message || '登录失败');
   } finally {

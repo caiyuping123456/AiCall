@@ -20,6 +20,7 @@ public class Consultation {
     private LocalDateTime endTime;
     private String cancelReason;
     private String rejectReason;
+    private String minutes;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -27,4 +28,9 @@ public class Consultation {
     private String patientName;
     private Integer patientAge;
     private String patientGender;
+
+    // JOIN fields from evaluation table
+    private Integer doctorScore;
+    private Integer serviceScore;
+    private String evaluationComment;
 }

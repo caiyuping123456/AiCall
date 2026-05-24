@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.followup.mapper.FollowUpMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO follow_up (consultation_id, patient_id, plan_day, questionnaire, status)
+        VALUES (#{consultationId}, #{patientId}, #{planDay}, #{questionnaire}, #{status})
+    </insert>
+
+    <select id="findByConsultationId" resultType="com.aicall.module.followup.entity.FollowUp">
+        SELECT f.*, c.consultation_no, p.name AS patient_name
+        FROM follow_up f
+        LEFT JOIN consultation c ON f.consultation_id = c.id
+        LEFT JOIN patient p ON f.patient_id = p.id
+        WHERE f.consultation_id = #{consultationId}
+        ORDER BY f.plan_day ASC
+    </select>
+
+    <select id="findByPatientId" resultType="com.aicall.module.followup.entity.FollowUp">
+        SELECT f.*, c.consultation_no FROM follow_up f
+        LEFT JOIN consultation c ON f.consultation_id = c.id
+        WHERE f.patient_id = #{patientId} ORDER BY f.create_time DESC
+    </select>
+
+    <select id="findPendingByPatientId" resultType="com.aicall.module.followup.entity.FollowUp">
+        SELECT f.*, c.consultation_no FROM follow_up f
+        LEFT JOIN consultation c ON f.consultation_id = c.id
+        WHERE f.patient_id = #{patientId} AND f.status IN (0, 1)
+        ORDER BY f.plan_day ASC
+    </select>
+
+    <select id="findById" resultType="com.aicall.module.followup.entity.FollowUp">
+        SELECT f.*, c.consultation_no, p.name AS patient_name
+        FROM follow_up f
+        LEFT JOIN consultation c ON f.consultation_id = c.id
+        LEFT JOIN patient p ON f.patient_id = p.id
+        WHERE f.id = #{id}
+    </select>
+
+    <select id="findDueByDate" resultType="com.aicall.module.followup.entity.FollowUp">
+        SELECT f.*, c.consultation_no, c.medical_summary, c.chief_complaint, p.name AS patient_name
+        FROM follow_up f
+        LEFT JOIN consultation c ON f.consultation_id = c.id
+        LEFT JOIN patient p ON f.patient_id = p.id
+        WHERE f.status = 0 AND c.end_time IS NOT NULL
+        AND DATE_ADD(DATE(c.end_time), INTERVAL f.plan_day DAY) = #{date}
+    </select>
+
+    <select id="findAbnormalByDoctorId" resultType="com.aicall.module.followup.entity.FollowUp">
+        SELECT f.*, c.consultation_no, p.name AS patient_name
+        FROM follow_up f
+        LEFT JOIN consultation c ON f.consultation_id = c.id
+        LEFT JOIN patient p ON f.patient_id = p.id
+        LEFT JOIN consultation_doctor cd ON c.id = cd.consultation_id
+        WHERE f.status = 3 AND cd.doctor_id = #{doctorId}
+        ORDER BY f.answer_time DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE follow_up SET status = #{status}, send_time = #{sendTime} WHERE id = #{id}
+    </update>
+
+    <update id="updateAnswer">
+        UPDATE follow_up SET answer = #{answer}, answer_time = #{answerTime}, status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updateAiAnalysis">
+        UPDATE follow_up SET ai_analysis = #{aiAnalysis}, status = #{status} WHERE id = #{id}
+    </update>
+</mapper>

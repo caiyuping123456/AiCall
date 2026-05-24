@@ -13,6 +13,8 @@ const routes: RouteRecordRaw[] = [
       { path: 'consultations', name: 'ConsultationList', component: () => import('@/views/ConsultationList.vue'), meta: { title: '会诊列表' } },
       { path: 'consultations/:id', name: 'ConsultationDetail', component: () => import('@/views/ConsultationDetail.vue'), meta: { title: '会诊详情' } },
       { path: 'consultations/:id/report', name: 'ReportEditor', component: () => import('@/views/ReportEditor.vue'), meta: { title: '报告编辑' } },
+      { path: 'consultations/:id/room', name: 'ConsultationRoom', component: () => import('@/views/ConsultationRoom.vue'), meta: { title: '会诊室' } },
+      { path: 'notifications', name: 'DoctorNotification', component: () => import('@/views/DoctorNotification.vue'), meta: { title: '通知中心' } },
     ],
   },
 ];

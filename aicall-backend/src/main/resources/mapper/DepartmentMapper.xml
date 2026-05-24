@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aicall.module.admin.mapper.DepartmentMapper">
+    <select id="findAllActive" resultType="com.aicall.module.admin.entity.Department">
+        SELECT * FROM department WHERE status = 1 ORDER BY id
+    </select>
+
+    <select id="findById" resultType="com.aicall.module.admin.entity.Department">
+        SELECT * FROM department WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO department (name, description) VALUES (#{name}, #{description})
+    </insert>
+
+    <update id="update">
+        UPDATE department SET name = #{name}, description = #{description} WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE department SET status = 0 WHERE id = #{id}
+    </update>
+</mapper>

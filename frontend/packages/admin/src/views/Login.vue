@@ -23,20 +23,25 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { post } from '@aicall/shared';
-import type { LoginResponse } from '@aicall/shared';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { adminLogin } from '@aicall/shared';
+import { useAdminStore } from '@/stores/admin';
 
+const router = useRouter();
+const adminStore = useAdminStore();
 const form = reactive({ username: '', password: '' });
 const loading = ref(false);
 
 async function handleLogin() {
   loading.value = true;
   try {
-    const res = await post<LoginResponse>('/admin/login', form);
-    localStorage.setItem('token', res.token);
-    localStorage.setItem('userName', res.name);
+    const res = await adminLogin(form.username, form.password);
+    adminStore.setAuth({ token: res.token, adminId: res.adminId, name: res.name, role: res.role });
+    ElMessage.success('登录成功');
+    router.push('/');
   } catch (e: any) {
-    console.error(e.message);
+    ElMessage.error(e.message || '登录失败');
   } finally {
     loading.value = false;
   }

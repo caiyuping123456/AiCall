@@ -8,4 +8,50 @@
         SELECT id, username, password, name, title, department, phone, avatar, introduction, status
         FROM doctor WHERE id = #{id}
     </select>
+    <select id="findAdminPage" resultType="com.aicall.module.doctor.entity.Doctor">
+        SELECT id, username, password, name, title, department, phone, avatar, introduction, status, create_time, update_time
+        FROM doctor
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                OR department LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="department != null and department != ''">
+                AND department = #{department}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(*)
+        FROM doctor
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                OR department LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="department != null and department != ''">
+                AND department = #{department}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO doctor (username, password, name, title, department, phone, introduction, status)
+        VALUES (#{username}, #{password}, #{name}, #{title}, #{department}, #{phone}, #{introduction}, #{status})
+    </insert>
+
+    <update id="updateById">
+        UPDATE doctor
+        SET name = #{name}, title = #{title}, department = #{department}, phone = #{phone}, introduction = #{introduction}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE doctor SET status = #{status} WHERE id = #{id}
+    </update>
 </mapper>
