@@ -9,6 +9,15 @@ const router = createRouter({
   routes,
 });
 
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('token');
+  if (to.meta.requiresAuth && !token) {
+    next({ name: 'Login' });
+  } else {
+    next();
+  }
+});
+
 const app = createApp(App);
 app.use(router);
 app.mount('#app');
