@@ -21,9 +21,7 @@ const STATUS_MAP: Record<number, string> = { 0: '草稿', 1: '资料审核中', 
 function statusText(s: number) { return STATUS_MAP[s] || '未知'; }
 
 function goDetail(item: any) {
-  if (item.status === 3 || item.status === 4 || item.status === 5) {
-    router.push(`/consultation/${item.id}/room`);
-  } else if (item.status >= 3) {
+  if (item.status >= 3) {
     router.push(`/consultation/${item.id}/status`);
   } else {
     router.push(`/consultation/${item.id}/summary`);

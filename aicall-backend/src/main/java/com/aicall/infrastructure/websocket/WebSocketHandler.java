@@ -1,141 +1,148 @@
 package com.aicall.infrastructure.websocket;
 
+import com.aicall.module.live.entity.LiveSubtitle;
+import com.aicall.module.live.mapper.LiveSubtitleMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.*;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(WebSocketHandler.class);
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final Map<String, CopyOnWriteArrayList<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionRoom = new ConcurrentHashMap<>();
+    private final Map<String, Long> sessionUserId = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionUserName = new ConcurrentHashMap<>();
 
-    // consultationId -> sessionId -> session
-    private static final Map<String, Map<String, WebSocketSession>> ROOMS = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper;
+    private final LiveSubtitleMapper liveSubtitleMapper;
 
-    // sessionId -> consultationId
-    private static final Map<String, String> SESSION_ROOM = new ConcurrentHashMap<>();
-
-    // sessionId -> userId + userName
-    private static final Map<String, String[]> SESSION_USER = new ConcurrentHashMap<>();
+    public WebSocketHandler(ObjectMapper objectMapper, LiveSubtitleMapper liveSubtitleMapper) {
+        this.objectMapper = objectMapper;
+        this.liveSubtitleMapper = liveSubtitleMapper;
+    }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(WebSocketSession session) {
+        log.info("WebSocket connected: {}", session.getId());
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        JsonNode node = MAPPER.readTree(message.getPayload());
-        String type = node.path("type").asText("");
-        String consultationId = node.path("consultationId").asText("");
+        String payload = message.getPayload();
+        JsonNode node = objectMapper.readTree(payload);
+        String type = node.get("type").asText();
+        String consultationId = node.has("consultationId") ? node.get("consultationId").asText() : null;
 
         switch (type) {
-            case "join" -> handleJoin(session, consultationId,
-                    node.path("userId").asText("0"),
-                    node.path("userName").asText(""));
-            case "leave" -> handleLeave(session, consultationId);
-            case "subtitle" -> handleSubtitle(session, consultationId, node);
-            default -> {}
+            case "join" -> {
+                Long userId = node.get("userId").asLong();
+                String userName = node.has("userName") ? node.get("userName").asText() : "";
+                sessionRoom.put(session.getId(), consultationId);
+                sessionUserId.put(session.getId(), userId);
+                sessionUserName.put(session.getId(), userName);
+                roomSessions.computeIfAbsent(consultationId, k -> new CopyOnWriteArrayList<>()).add(session);
+                broadcast(consultationId, buildNotice(consultationId, userName + " 加入了会诊"));
+                log.info("User {} joined room {}", userId, consultationId);
+            }
+            case "leave" -> removeSession(session);
+            case "subtitle" -> {
+                Long userId = node.get("userId").asLong();
+                String userName = node.has("userName") ? node.get("userName").asText() : "";
+                String text = node.get("text").asText();
+
+                LiveSubtitle subtitle = new LiveSubtitle();
+                subtitle.setRoomId(node.has("roomId") ? node.get("roomId").asLong() : null);
+                subtitle.setUserId(userId);
+                subtitle.setUserName(userName);
+                subtitle.setContent(text);
+                try {
+                    liveSubtitleMapper.insert(subtitle);
+                } catch (Exception e) {
+                    log.warn("Failed to persist subtitle: {}", e.getMessage());
+                }
+
+                broadcast(consultationId, buildSubtitle(consultationId, userId, userName, text));
+            }
+            case "notice" -> {
+                String msg = node.get("message").asText();
+                broadcast(consultationId, buildNotice(consultationId, msg));
+            }
         }
-    }
-
-    private void handleJoin(WebSocketSession session, String consultationId, String userId, String userName) throws Exception {
-        log.info("[WS] join: consultationId={}, userId={}, userName={}, sessionId={}", consultationId, userId, userName, session.getId());
-        ROOMS.computeIfAbsent(consultationId, k -> new ConcurrentHashMap<>()).put(session.getId(), session);
-        SESSION_ROOM.put(session.getId(), consultationId);
-        SESSION_USER.put(session.getId(), new String[]{userId, userName});
-
-        ObjectNode notice = MAPPER.createObjectNode();
-        notice.put("type", "notice");
-        notice.put("message", userName + " 加入了会诊");
-        broadcast(consultationId, notice, null);
-    }
-
-    private void handleLeave(WebSocketSession session, String consultationId) throws Exception {
-        String[] userInfo = SESSION_USER.get(session.getId());
-        String userName = userInfo != null ? userInfo[1] : "未知用户";
-
-        Map<String, WebSocketSession> room = ROOMS.get(consultationId);
-        if (room != null) {
-            room.remove(session.getId());
-            if (room.isEmpty()) ROOMS.remove(consultationId);
-        }
-        SESSION_ROOM.remove(session.getId());
-        SESSION_USER.remove(session.getId());
-
-        ObjectNode notice = MAPPER.createObjectNode();
-        notice.put("type", "notice");
-        notice.put("message", userName + " 离开了会诊");
-        broadcast(consultationId, notice, session.getId());
-    }
-
-    private void handleSubtitle(WebSocketSession session, String consultationId, JsonNode node) throws Exception {
-        String[] userInfo = SESSION_USER.get(session.getId());
-        long userId = 0;
-        if (userInfo != null) { try { userId = Long.parseLong(userInfo[0]); } catch (NumberFormatException e) {} }
-        String userName = userInfo != null ? userInfo[1] : node.path("userName").asText("");
-
-        ObjectNode subtitle = MAPPER.createObjectNode();
-        subtitle.put("type", "subtitle");
-        subtitle.put("userId", userId);
-        subtitle.put("userName", userName);
-        subtitle.put("text", node.path("text").asText(""));
-
-        Map<String, WebSocketSession> room = ROOMS.get(consultationId);
-        int roomSize = room != null ? room.size() : 0;
-        log.info("[WS] subtitle: consultationId={}, userName={}, text={}, roomSize={}, excludeSession={}", consultationId, userName, node.path("text").asText(""), roomSize, session.getId());
-
-        broadcast(consultationId, subtitle, session.getId());
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        String consultationId = SESSION_ROOM.remove(session.getId());
-        SESSION_USER.remove(session.getId());
-        if (consultationId != null) {
-            Map<String, WebSocketSession> room = ROOMS.get(consultationId);
-            if (room != null) {
-                room.remove(session.getId());
-                if (room.isEmpty()) ROOMS.remove(consultationId);
-            }
-        }
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        removeSession(session);
+        log.info("WebSocket disconnected: {}, status: {}", session.getId(), status);
     }
 
-    private void broadcast(String consultationId, ObjectNode message, String excludeSessionId) throws IOException {
-        Map<String, WebSocketSession> room = ROOMS.get(consultationId);
-        if (room == null) return;
-        String payload = MAPPER.writeValueAsString(message);
-        for (Map.Entry<String, WebSocketSession> entry : room.entrySet()) {
-            if (entry.getKey().equals(excludeSessionId)) continue;
-            WebSocketSession s = entry.getValue();
-            if (s.isOpen()) {
-                s.sendMessage(new TextMessage(payload));
+    private void removeSession(WebSocketSession session) {
+        String consultationId = sessionRoom.remove(session.getId());
+        sessionUserId.remove(session.getId());
+        String userName = sessionUserName.remove(session.getId());
+        if (consultationId != null) {
+            CopyOnWriteArrayList<WebSocketSession> sessions = roomSessions.get(consultationId);
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) roomSessions.remove(consultationId);
             }
+            broadcast(consultationId, buildNotice(consultationId, (userName != null ? userName : "某人") + " 离开了会诊"));
         }
     }
 
     public void sendToUser(Long userId, String message) {
-        for (Map<String, WebSocketSession> room : ROOMS.values()) {
-            for (Map.Entry<String, WebSocketSession> entry : room.entrySet()) {
-                String[] userInfo = SESSION_USER.get(entry.getKey());
-                if (userInfo != null && userInfo[0].equals(String.valueOf(userId))) {
-                    WebSocketSession s = entry.getValue();
-                    if (s.isOpen()) {
-                        try { s.sendMessage(new TextMessage(message)); } catch (IOException ignored) {}
+        for (Map.Entry<String, Long> entry : sessionUserId.entrySet()) {
+            if (entry.getValue().equals(userId)) {
+                String roomKey = sessionRoom.get(entry.getKey());
+                if (roomKey != null) {
+                    CopyOnWriteArrayList<WebSocketSession> sessions = roomSessions.get(roomKey);
+                    if (sessions != null) {
+                        TextMessage textMessage = new TextMessage(message);
+                        for (WebSocketSession s : sessions) {
+                            if (s.getId().equals(entry.getKey()) && s.isOpen()) {
+                                try { s.sendMessage(textMessage); } catch (IOException ignored) {}
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    private void broadcast(String consultationId, String message) {
+        CopyOnWriteArrayList<WebSocketSession> sessions = roomSessions.get(consultationId);
+        if (sessions == null) return;
+        TextMessage textMessage = new TextMessage(message);
+        for (WebSocketSession s : sessions) {
+            try {
+                if (s.isOpen()) s.sendMessage(textMessage);
+            } catch (IOException e) {
+                log.error("Failed to send to session {}", s.getId(), e);
+            }
+        }
+    }
+
+    private String buildNotice(String consultationId, String msg) {
+        return "{\"type\":\"notice\",\"consultationId\":\"" + consultationId + "\",\"message\":\"" +
+                msg.replace("\"", "\\\"") + "\"}";
+    }
+
+    private String buildSubtitle(String consultationId, Long userId, String userName, String text) {
+        return "{\"type\":\"subtitle\",\"consultationId\":\"" + consultationId + "\",\"userId\":" +
+                userId + ",\"userName\":\"" + userName.replace("\"", "\\\"") +
+                "\",\"text\":\"" + text.replace("\"", "\\\"") + "\"}";
     }
 }
