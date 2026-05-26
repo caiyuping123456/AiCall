@@ -13,6 +13,7 @@ export interface FlowState {
   selectedType: number | null;
   selectedDoctorIds: number[];
   department: string;
+  consultationId: number | null; // set when coming from registration flow
   timestamp: number;
 }
 
@@ -44,6 +45,7 @@ export const useConsultationFlowStore = defineStore('consultationFlow', () => {
       selectedType: null,
       selectedDoctorIds: [],
       department: '',
+      consultationId: null,
       timestamp: Date.now(),
     };
   }
@@ -62,6 +64,7 @@ export const useConsultationFlowStore = defineStore('consultationFlow', () => {
   function setSelectedType(t: number) { state.value.selectedType = t; persist(); }
   function setSelectedDoctorIds(ids: number[]) { state.value.selectedDoctorIds = ids; persist(); }
   function setDepartment(d: string) { state.value.department = d; persist(); }
+  function setConsultationId(id: number | null) { state.value.consultationId = id; persist(); }
 
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
@@ -74,6 +77,6 @@ export const useConsultationFlowStore = defineStore('consultationFlow', () => {
   return {
     state, nextStep, setChiefComplaint, setMedicalSummary, setChatHistory,
     addChatMessage, addFileId, setSelectedType, setSelectedDoctorIds, setDepartment,
-    reset, isExpired, isComplete, persist
+    setConsultationId, reset, isExpired, isComplete, persist
   };
 });

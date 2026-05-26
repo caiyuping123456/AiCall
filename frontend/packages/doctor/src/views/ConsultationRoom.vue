@@ -219,6 +219,8 @@ function connectWebSocket() {
       if (data.userName && !patientName.value && data.userId !== doctorId) {
         patientName.value = data.userName;
       }
+      // Skip own messages — already added locally before sending
+      if (data.userId === doctorId) return;
       subtitles.value.push({ userId: data.userId, userName: data.userName, text: data.text });
       nextTick(() => { const el = subRef.value; if (el) el.scrollTop = el.scrollHeight; });
     } else if (data.type === 'notice') {

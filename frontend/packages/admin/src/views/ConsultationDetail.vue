@@ -3,7 +3,8 @@
     <el-page-header @back="router.back()" title="返回" content="会诊详情" style="margin-bottom: 20px" />
 
     <template v-if="detail">
-      <div style="margin-bottom: 16px" v-if="detail.status !== 6 && detail.status !== 7 && detail.status !== 8">
+      <!-- Cancel only for early stages (before consultation completes) -->
+      <div style="margin-bottom: 16px" v-if="detail.status < 4">
         <el-button type="danger" @click="showCancelDialog = true">取消会诊</el-button>
       </div>
 
@@ -88,6 +89,26 @@
         <div style="white-space: pre-wrap; line-height: 1.8">{{ detail.minutes }}</div>
       </el-card>
 
+      <el-card header="会诊报告" style="margin-bottom: 20px" v-if="detail.report">
+        <el-descriptions :column="2" border style="margin-bottom: 12px">
+          <el-descriptions-item label="报告状态">
+            <el-tag :type="detail.report.status === 0 ? 'warning' : detail.report.status === 1 ? 'primary' : 'success'">
+              {{ ['草稿', '待质控', '已签发'][detail.report.status] || '未知' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="签发人" v-if="detail.report.signedByName">{{ detail.report.signedByName }}</el-descriptions-item>
+          <el-descriptions-item label="签发时间" v-if="detail.report.signedTime" :span="2">{{ detail.report.signedTime }}</el-descriptions-item>
+        </el-descriptions>
+        <template v-if="parsedReportFields">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item v-for="(value, key) in parsedReportFields" :key="key" :label="reportFieldLabels[key] || key">
+              <div style="white-space: pre-wrap; line-height: 1.7">{{ value }}</div>
+            </el-descriptions-item>
+          </el-descriptions>
+        </template>
+        <div v-else style="white-space: pre-wrap; line-height: 1.8; padding: 12px; background: #f9fafb; border-radius: 8px;">{{ detail.report.content }}</div>
+      </el-card>
+
       <el-card header="会诊录像" style="margin-bottom: 20px" v-if="recordings.length">
         <el-table :data="recordings" stripe>
           <el-table-column label="录像文件" min-width="200">
@@ -147,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { getAdminConsultationDetail, cancelAdminConsultation, getAdminDoctors, assignConsultationDoctors, getLiveRoomByConsultation, getLiveRecordings, getConsultationTimeline, type Recording, type AdminDoctorListItem, type TimelineItem } from '@aicall/shared';
@@ -167,6 +188,39 @@ const recordings = ref<Recording[]>([]);
 const timeline = ref<TimelineItem[]>([]);
 const showPlayer = ref(false);
 const playingUrl = ref('');
+
+const reportFieldLabels: Record<string, string> = {
+  chiefComplaint: '主诉',
+  presentIllness: '现病史',
+  pastHistory: '既往史',
+  examinationFindings: '检查所见',
+  diagnosis: '诊断意见',
+  analysis: '分析说明',
+  recommendation: '建议',
+  followUp: '随访建议',
+};
+
+function tryParseJson(content: string): Record<string, string> | null {
+  if (!content) return null;
+  try {
+    let json = content.trim();
+    if (json.startsWith('```')) {
+      json = json.replace(/```json\s*/i, '').replace(/```\s*$/i, '');
+    }
+    const obj = JSON.parse(json);
+    if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) {
+      return obj as Record<string, string>;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const parsedReportFields = computed(() => {
+  if (!detail.value?.report?.content) return null;
+  return tryParseJson(detail.value.report.content);
+});
 
 const consultationStatusMap: Record<number, string> = {
   0: '已提交', 1: '资料审核中', 2: '专家确认中', 3: '已排期',

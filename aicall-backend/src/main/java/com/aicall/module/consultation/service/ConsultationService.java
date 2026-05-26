@@ -8,9 +8,11 @@ import com.aicall.module.ai.service.SummaryService;
 import com.aicall.module.consultation.dto.*;
 import com.aicall.module.consultation.entity.Consultation;
 import com.aicall.module.consultation.entity.ConsultationUpload;
+import com.aicall.module.consultation.entity.Report;
 import com.aicall.module.consultation.mapper.ConsultationDoctorMapper;
 import com.aicall.module.consultation.mapper.ConsultationMapper;
 import com.aicall.module.consultation.mapper.ConsultationUploadMapper;
+import com.aicall.module.consultation.mapper.ReportMapper;
 import com.aicall.module.doctor.mapper.DoctorMapper;
 import com.aicall.module.doctor.entity.Doctor;
 import com.aicall.module.payment.entity.PaymentOrder;
@@ -40,6 +42,7 @@ public class ConsultationService {
     private final ConsultationMapper consultationMapper;
     private final ConsultationUploadMapper consultationUploadMapper;
     private final ConsultationDoctorMapper consultationDoctorMapper;
+    private final ReportMapper reportMapper;
     private final DoctorMapper doctorMapper;
     private final PaymentOrderMapper paymentOrderMapper;
     private final PreDiagnosisService preDiagnosisService;
@@ -198,15 +201,39 @@ public class ConsultationService {
         vo.setDepartment(c.getDepartment());
         vo.setChiefComplaint(c.getChiefComplaint());
         vo.setMedicalSummary(c.getMedicalSummary());
+        vo.setPatientName(c.getPatientName());
+        vo.setPatientAge(c.getPatientAge());
+        vo.setPatientGender(c.getPatientGender());
         vo.setFee(c.getFee());
         vo.setPaymentStatus(c.getPaymentStatus());
         vo.setCreateTime(c.getCreateTime());
+        vo.setMinutes(c.getMinutes());
+
+        // Populate report info if exists
+        Report report = reportMapper.findByConsultationId(consultationId);
+        if (report != null) {
+            ConsultationDetailVO.ReportInfo ri = new ConsultationDetailVO.ReportInfo();
+            ri.setId(report.getId());
+            ri.setContent(report.getContent());
+            ri.setStatus(report.getStatus());
+            if (report.getSignedBy() != null) {
+                Doctor signer = doctorMapper.findById(report.getSignedBy());
+                ri.setSignedByName(signer != null ? signer.getName() : null);
+            }
+            ri.setSignedTime(report.getSignedTime() != null
+                    ? report.getSignedTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : null);
+            vo.setReport(ri);
+        }
 
         consultationDoctorMapper.findByConsultationId(consultationId).stream()
             .filter(cd -> cd.getStatus() == 1)
             .findFirst().ifPresent(cd -> {
                 Doctor d = doctorMapper.findById(cd.getDoctorId());
-                if (d != null) { vo.setDoctorName(d.getName()); vo.setDoctorTitle(d.getTitle()); }
+                if (d != null) {
+                    vo.setDoctorName(d.getName());
+                    vo.setDoctorTitle(d.getTitle());
+                    vo.setDoctorDepartment(d.getDepartment());
+                }
             });
 
         List<ConsultationUpload> uploads = consultationUploadMapper.findByConsultationId(consultationId);

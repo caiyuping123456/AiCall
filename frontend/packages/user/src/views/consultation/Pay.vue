@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <van-nav-bar title="确认支付" left-arrow @click-left="$router.back()" />
+    <van-nav-bar title="确认支付" left-arrow @click-left="goBack" />
     <van-steps :active="5" active-color="#1989fa">
       <van-step>登录</van-step>
       <van-step>预问诊</van-step>
@@ -27,12 +27,22 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { submitConsultation } from '@aicall/shared';
+import { submitConsultation, payConsultation } from '@aicall/shared';
 import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
 const router = useRouter();
 const flow = useConsultationFlowStore();
 const loading = ref(false);
+
+function goBack() {
+  if (flow.state.consultationId != null) {
+    // Registration flow: back to upload
+    router.push('/consultation/upload');
+  } else {
+    // Full flow: back to select type
+    router.push('/consultation/select-type');
+  }
+}
 
 const consultationTypeLabel = computed(() =>
   flow.state.selectedType === 2 ? '多学科MDT会诊' : '单学科会诊'
@@ -52,15 +62,21 @@ async function handlePay() {
 
   loading.value = true;
   try {
-    await submitConsultation({
-      department: flow.state.department || '未指定',
-      type: flow.state.selectedType || 1,
-      doctorIds: flow.state.selectedDoctorIds,
-      chiefComplaint: flow.state.chiefComplaint,
-      medicalSummary: flow.state.medicalSummary,
-      chatHistory: flow.state.chatHistory,
-      fileIds: flow.state.uploadedFileIds,
-    });
+    if (flow.state.consultationId != null) {
+      // Registration flow: consultation already created, just pay
+      await payConsultation(flow.state.consultationId);
+    } else {
+      // Full flow: create consultation with all data
+      await submitConsultation({
+        department: flow.state.department || '未指定',
+        type: flow.state.selectedType || 1,
+        doctorIds: flow.state.selectedDoctorIds,
+        chiefComplaint: flow.state.chiefComplaint,
+        medicalSummary: flow.state.medicalSummary,
+        chatHistory: flow.state.chatHistory,
+        fileIds: flow.state.uploadedFileIds,
+      });
+    }
     flow.nextStep(7);
     router.push('/consultation/success');
   } catch (e: any) {

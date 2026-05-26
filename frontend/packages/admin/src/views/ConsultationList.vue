@@ -1,44 +1,56 @@
 <template>
-  <div>
-    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-      <el-select v-model="statusFilter" placeholder="全部状态" clearable style="width: 160px" @change="page = 1; loadData()">
-        <el-option v-for="(label, key) in consultationStatusMap" :key="key" :label="label" :value="Number(key)" />
-      </el-select>
-      <el-input v-model="keyword" placeholder="搜索患者姓名/会诊编号" style="width: 300px" clearable @clear="loadData" @keyup.enter="loadData" />
+  <div class="page-shell">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">会诊管理</h2>
+        <div class="page-subtitle">按状态、患者姓名或会诊编号筛选平台会诊记录</div>
+      </div>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe>
-      <el-table-column prop="consultationNo" label="会诊编号" width="180" />
-      <el-table-column prop="patientName" label="患者" />
-      <el-table-column prop="department" label="科室" />
-      <el-table-column label="状态" width="120">
-        <template #default="{ row }">
-          <el-tag :type="statusTagType(row.status)">{{ consultationStatusMap[row.status] || '未知' }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="费用" width="100">
-        <template #default="{ row }">¥{{ row.fee ?? '0' }}</template>
-      </el-table-column>
-      <el-table-column label="支付" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.paymentStatus === 1 ? 'success' : row.paymentStatus === 2 ? 'warning' : 'info'" size="small">
-            {{ ['', '已支付', '已退款'][row.paymentStatus] || '未支付' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180" />
-      <el-table-column label="操作" width="100">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="router.push(`/consultations/${row.id}`)">详情</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="toolbar">
+      <div class="filter-row">
+        <el-select v-model="statusFilter" placeholder="全部状态" clearable style="width: 170px" @change="page = 1; loadData()">
+          <el-option v-for="(label, key) in consultationStatusMap" :key="key" :label="label" :value="Number(key)" />
+        </el-select>
+        <el-input v-model="keyword" placeholder="搜索患者姓名/会诊编号" style="width: 320px" clearable @clear="loadData" @keyup.enter="loadData" />
+      </div>
+      <el-button type="primary" @click="page = 1; loadData()">查询</el-button>
+    </div>
 
-    <el-pagination style="margin-top: 16px; justify-content: flex-end;"
-      v-model:current-page="page" v-model:page-size="size"
-      :page-sizes="[10, 20, 50]"
-      :total="total" layout="total, sizes, prev, pager, next"
-      @current-change="loadData" @size-change="loadData" />
+    <div class="table-panel">
+      <el-table :data="list" v-loading="loading" stripe>
+        <el-table-column prop="consultationNo" label="会诊编号" width="180" />
+        <el-table-column prop="patientName" label="患者" />
+        <el-table-column prop="department" label="科室" />
+        <el-table-column label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="statusTagType(row.status)">{{ consultationStatusMap[row.status] || '未知' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="费用" width="100">
+          <template #default="{ row }">¥{{ row.fee ?? '0' }}</template>
+        </el-table-column>
+        <el-table-column label="支付" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.paymentStatus === 1 ? 'success' : row.paymentStatus === 2 ? 'warning' : 'info'" size="small">
+              {{ ['', '已支付', '已退款'][row.paymentStatus] || '未支付' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="router.push(`/consultations/${row.id}`)">详情</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination class="pagination"
+        v-model:current-page="page" v-model:page-size="size"
+        :page-sizes="[10, 20, 50]"
+        :total="total" layout="total, sizes, prev, pager, next"
+        @current-change="loadData" @size-change="loadData" />
+    </div>
   </div>
 </template>
 
@@ -84,3 +96,10 @@ function statusTagType(status: number): string {
   return map[status] || 'info';
 }
 </script>
+
+<style scoped>
+.pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+</style>

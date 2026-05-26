@@ -66,6 +66,23 @@ public class AdminConsultationService {
         detail.setEndTime(c.getEndTime());
         detail.setCancelReason(c.getCancelReason());
         detail.setCreateTime(c.getCreateTime());
+        detail.setMinutes(c.getMinutes());
+
+        // Populate report info
+        Report report = reportMapper.findByConsultationId(id);
+        if (report != null) {
+            AdminConsultationDetailVO.ReportVO rvo = new AdminConsultationDetailVO.ReportVO();
+            rvo.setId(report.getId());
+            rvo.setContent(report.getContent());
+            rvo.setStatus(report.getStatus());
+            if (report.getSignedBy() != null) {
+                Doctor signer = doctorMapper.findById(report.getSignedBy());
+                rvo.setSignedByName(signer != null ? signer.getName() : null);
+            }
+            rvo.setSignedTime(report.getSignedTime() != null
+                    ? report.getSignedTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : null);
+            detail.setReport(rvo);
+        }
 
         List<ConsultationDoctor> assignments = consultationDoctorMapper.findByConsultationId(id);
         detail.setAssignedDoctors(assignments.stream().map(cd -> {

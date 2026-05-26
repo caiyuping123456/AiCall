@@ -24,6 +24,8 @@ public class AdminConsultationDetailVO {
     private LocalDateTime endTime;
     private String cancelReason;
     private LocalDateTime createTime;
+    private String minutes;
+    private ReportVO report;
     private List<AssignedDoctorVO> assignedDoctors;
     private List<UploadItemVO> uploads;
 
@@ -35,6 +37,15 @@ public class AdminConsultationDetailVO {
         private String department;
         private Integer role;
         private Integer confirmStatus;
+    }
+
+    @Data
+    public static class ReportVO {
+        private Long id;
+        private String content;
+        private Integer status;
+        private String signedByName;
+        private String signedTime;
     }
 
     @Data

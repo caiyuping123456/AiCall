@@ -1,8 +1,10 @@
 import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import { createPinia } from 'pinia';
 import App from './App.vue';
 import routes from './router';
 import 'vant/lib/index.css';
+import './styles.css';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,5 +32,7 @@ router.beforeEach((to, _from, next) => {
 });
 
 const app = createApp(App);
+const pinia = createPinia();
+app.use(pinia);
 app.use(router);
 app.mount('#app');

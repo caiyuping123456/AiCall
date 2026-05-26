@@ -7,19 +7,32 @@
         <el-button type="primary" @click="handleConfirm" :loading="actionLoading">确认接诊</el-button>
         <el-button type="danger" @click="showRejectDialog = true">拒绝</el-button>
       </div>
-      <div style="margin-bottom: 16px" v-if="detail.status === 3">
+      <!-- status=3: ready to generate report -->
+      <div style="margin-bottom: 16px" v-if="detail.status === 3 && !detail.report">
         <el-button type="success" @click="handleGenerateReport" :loading="actionLoading">生成AI报告</el-button>
       </div>
-      <div style="margin-bottom: 16px" v-if="detail.status === 4 && detail.report?.status === 0">
-        <el-button type="primary" @click="router.push(`/consultations/${id}/report`)">编辑报告</el-button>
-      </div>
+      <!-- status=3 or 4: enter room -->
       <div style="margin-bottom: 16px" v-if="detail.status === 3 || detail.status === 4">
         <el-button type="success" @click="router.push(`/consultations/${id}/room`)">进入会诊室</el-button>
       </div>
-      <div style="margin-bottom: 16px" v-if="detail.status === 5 || detail.status === 6">
-        <el-tag :type="detail.status === 6 ? 'info' : 'success'" size="large">
-          {{ detail.status === 6 ? '已完成' : '报告已签发' }}
-        </el-tag>
+      <!-- report exists as draft: edit -->
+      <div style="margin-bottom: 16px" v-if="detail.report?.status === 0 && (detail.status === 3 || detail.status === 4)">
+        <el-button type="primary" @click="router.push(`/consultations/${id}/report`)">编辑报告</el-button>
+      </div>
+      <!-- status=4 with report draft: review/edit -->
+      <div style="margin-bottom: 16px" v-if="detail.status === 4">
+        <el-tag type="warning" size="large">待会诊</el-tag>
+      </div>
+      <!-- status=5: report issued -->
+      <div style="margin-bottom: 16px" v-if="detail.status === 5">
+        <el-tag type="success" size="large">报告已签发</el-tag>
+      </div>
+      <!-- status=6: completed -->
+      <div style="margin-bottom: 16px" v-if="detail.status === 6">
+        <el-tag type="info" size="large">已完成</el-tag>
+        <template v-if="detail.report">
+          <el-button type="primary" style="margin-left: 12px" @click="router.push(`/consultations/${id}/report`)">查看报告</el-button>
+        </template>
       </div>
 
       <el-tabs>

@@ -1,0 +1,1 @@
+import{k as r,p as e}from"./index-Ig8WKJ6z.js";function n(){return r("/user/departments")}function o(t){return r(`/user/departments/${t}/doctors`)}function a(t){return r(`/user/doctors/${t}`)}function u(t){return e("/user/registration",t)}export{a,o as b,n as g,u as r};

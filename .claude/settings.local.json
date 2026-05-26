@@ -8,7 +8,10 @@
       "Bash(mkdir -p \"E:/javaclass/AiCall/aicall-backend/src/main/resources\")",
       "Bash(git *)",
       "Bash(mysql *)",
-      "Bash(mvn compile *)"
+      "Bash(mvn compile *)",
+      "Bash(pnpm build:user)",
+      "Bash(pnpm build:admin)",
+      "Bash(pnpm build:doctor)"
     ]
   }
 }

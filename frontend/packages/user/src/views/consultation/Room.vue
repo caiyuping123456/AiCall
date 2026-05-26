@@ -29,7 +29,7 @@
             </div>
           </div>
           <div class="input-bar">
-            <van-field v-model="inputText" placeholder="输入消息..." size="small" @keyup.enter="sendMessage" />
+            <van-field v-model="inputText" placeholder="输入消息..." @keyup.enter="sendMessage" />
             <van-button size="small" type="primary" @click="sendMessage">发送</van-button>
           </div>
         </van-tab>
@@ -104,7 +104,7 @@ async function init() {
 
 async function loadDetail() {
   try {
-    const d = await getConsultationDetail(consultationId);
+    const d = await getConsultationDetail(consultationId) as any;
     if (d.doctorName) doctorName.value = d.doctorName;
   } catch {}
   if (!patientName) {
@@ -190,6 +190,8 @@ function connectWebSocket() {
       if (data.userName && !doctorName.value && data.userId !== patientId) {
         doctorName.value = data.userName;
       }
+      // Skip own messages — already added locally before sending
+      if (data.userId === patientId) return;
       subtitles.value.push({ userId: data.userId, userName: data.userName, text: data.text });
       nextTick(() => { const el = subRef.value; if (el) el.scrollTop = el.scrollHeight; });
     } else if (data.type === 'notice') {

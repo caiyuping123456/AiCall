@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <van-nav-bar title="AI预问诊" left-arrow @click-left="$router.back()" />
+    <van-nav-bar title="AI预问诊" left-arrow @click-left="router.push('/consultation/start')" />
     <van-steps :active="1" active-color="#1989fa">
       <van-step>登录</van-step>
       <van-step>预问诊</van-step>

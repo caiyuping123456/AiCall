@@ -2,12 +2,19 @@
   <div class="page">
     <van-nav-bar :title="deptName + ' - 医生列表'" left-arrow @click-left="$router.back()" />
     <div class="content">
+      <div class="page-intro mobile-card">
+        <div>
+          <h2>{{ deptName || '科室' }}医生</h2>
+          <p>查看医生职称、简介并选择合适的会诊医生。</p>
+        </div>
+        <van-icon name="manager-o" size="30" color="#14b8a6" />
+      </div>
       <van-loading v-if="loading" class="center-loading" />
       <van-empty v-else-if="doctors.length === 0" description="暂无医生" />
       <div v-else class="doctor-list">
-        <div v-for="doc in doctors" :key="doc.id" class="doctor-card" @click="goDetail(doc)">
+        <div v-for="doc in doctors" :key="doc.id" class="doctor-card mobile-card" @click="goDetail(doc)">
           <div class="doctor-avatar">
-            <van-image v-if="doc.avatar" :src="doc.avatar" round width="56" height="56" fit="cover" />
+            <van-image v-if="doc.avatar" :src="doc.avatar" round width="58" height="58" fit="cover" />
             <div v-else class="avatar-placeholder">{{ doc.name?.charAt(0) }}</div>
           </div>
           <div class="doctor-info">
@@ -16,9 +23,9 @@
               <van-tag v-if="doc.title" type="primary" size="medium">{{ doc.title }}</van-tag>
             </div>
             <div class="doctor-dept">{{ doc.department }}</div>
-            <div class="doctor-intro">{{ doc.introduction ? (doc.introduction.length > 40 ? doc.introduction.substring(0, 40) + '...' : doc.introduction) : '暂无介绍' }}</div>
+            <div class="doctor-intro">{{ doc.introduction ? (doc.introduction.length > 48 ? doc.introduction.substring(0, 48) + '...' : doc.introduction) : '暂无介绍' }}</div>
           </div>
-          <van-icon name="arrow" color="#c8c9cc" />
+          <van-icon name="arrow" color="#94a3b8" />
         </div>
       </div>
     </div>
@@ -54,30 +61,89 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page { min-height: 100vh; background: #f7f8fa; }
-.content { padding: 16px; }
-.center-loading { display: flex; justify-content: center; padding-top: 60px; }
-.doctor-list { display: flex; flex-direction: column; gap: 12px; }
-.doctor-card {
-  background: #fff;
-  border-radius: 12px;
+.page-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
   padding: 16px;
+}
+
+.page-intro h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 18px;
+}
+
+.page-intro p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.doctor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.doctor-card {
+  padding: 15px;
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.16s ease, border-color 0.16s ease;
 }
-.doctor-card:active { transform: scale(0.98); }
+
+.doctor-card:active {
+  transform: scale(0.99);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
 .avatar-placeholder {
-  width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #1989fa, #4fc3f7);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 22px; font-weight: 600;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #2563eb, #14b8a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
 }
-.doctor-info { flex: 1; min-width: 0; }
-.doctor-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.doctor-name { font-size: 16px; font-weight: 600; color: #323233; }
-.doctor-dept { font-size: 13px; color: #969799; margin-bottom: 4px; }
-.doctor-intro { font-size: 13px; color: #646566; line-height: 1.4; }
+
+.doctor-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.doctor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.doctor-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.doctor-dept {
+  font-size: 13px;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
+.doctor-intro {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
 </style>

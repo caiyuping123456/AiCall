@@ -1,64 +1,74 @@
 <template>
-  <div v-loading="loading">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-      <h3 style="margin: 0">数据概览</h3>
-      <el-button type="primary" size="small" @click="loadData" :loading="loading">刷新数据</el-button>
+  <div class="page-shell" v-loading="loading">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">数据概览</h2>
+        <div class="page-subtitle">实时查看平台会诊、收入、科室分布和医生工作量</div>
+      </div>
+      <el-button type="primary" @click="loadData" :loading="loading">刷新数据</el-button>
     </div>
 
-    <el-row :gutter="16" style="margin-bottom: 20px">
+    <el-row :gutter="16" class="stats-row">
       <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="会诊总数" :value="data?.consultationTotal ?? 0" />
+        <el-card shadow="never" class="stat-card stat-blue">
+          <div class="stat-label">会诊总数</div>
+          <div class="stat-value">{{ data?.consultationTotal ?? 0 }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="本月新增" :value="data?.newThisMonth ?? 0" />
+        <el-card shadow="never" class="stat-card stat-teal">
+          <div class="stat-label">本月新增</div>
+          <div class="stat-value">{{ data?.newThisMonth ?? 0 }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="本周新增" :value="data?.newThisWeek ?? 0" />
+        <el-card shadow="never" class="stat-card stat-amber">
+          <div class="stat-label">本周新增</div>
+          <div class="stat-value">{{ data?.newThisWeek ?? 0 }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover">
-          <el-statistic title="已收金额" :value="data?.revenue?.paid ?? 0" prefix="¥" />
+        <el-card shadow="never" class="stat-card stat-green">
+          <div class="stat-label">已收金额</div>
+          <div class="stat-value money">¥{{ data?.revenue?.paid ?? 0 }}</div>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-row :gutter="16" style="margin-bottom: 20px">
+    <el-row :gutter="16" class="chart-row">
       <el-col :span="8">
-        <el-card header="科室分布">
-          <div ref="deptChartRef" style="height: 300px" />
+        <el-card header="科室分布" shadow="never" class="chart-card">
+          <div ref="deptChartRef" class="chart-box" />
         </el-card>
       </el-col>
       <el-col :span="8">
-        <el-card header="状态分布">
-          <div ref="statusChartRef" style="height: 300px" />
+        <el-card header="状态分布" shadow="never" class="chart-card">
+          <div ref="statusChartRef" class="chart-box" />
         </el-card>
       </el-col>
       <el-col :span="8">
-        <el-card header="近30天趋势">
-          <div ref="trendChartRef" style="height: 300px" />
+        <el-card header="近30天趋势" shadow="never" class="chart-card">
+          <div ref="trendChartRef" class="chart-box" />
         </el-card>
       </el-col>
     </el-row>
 
-    <el-row :gutter="16" style="margin-bottom: 20px">
+    <el-row :gutter="16" class="chart-row">
       <el-col :span="24">
-        <el-card header="近30天收入趋势">
-          <div ref="revenueChartRef" style="height: 300px" />
+        <el-card header="近30天收入趋势" shadow="never" class="chart-card">
+          <div ref="revenueChartRef" class="chart-box wide" />
         </el-card>
       </el-col>
     </el-row>
 
-    <el-card header="医生工作量排名">
+    <el-card shadow="never" class="workload-card">
       <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>医生工作量排名</span>
-          <el-button type="primary" size="small" @click="handleExport">导出报表</el-button>
+        <div class="card-header">
+          <div>
+            <div class="card-title">医生工作量排名</div>
+            <div class="card-subtitle">统计医生参与会诊数量</div>
+          </div>
+          <el-button type="primary" @click="handleExport">导出报表</el-button>
         </div>
       </template>
       <el-table :data="data?.doctorWorkload ?? []" stripe>
@@ -133,12 +143,14 @@ function renderCharts() {
 function renderDeptChart() {
   const chart = initChart(deptChartRef.value);
   if (!chart) return;
+  const deptData = Object.entries(data.value!.byDepartment).map(([name, value]) => ({ name, value }));
   chart.setOption({
     tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', right: 10, top: 'center' },
+    legend: { orient: 'horizontal', bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
     series: [{
-      type: 'pie', radius: ['40%', '70%'],
-      data: Object.entries(data.value!.byDepartment).map(([name, value]) => ({ name, value })),
+      type: 'pie', radius: ['40%', '68%'], center: ['50%', '45%'],
+      data: deptData,
+      label: { show: deptData.length <= 6, fontSize: 10 },
     }],
   });
 }
@@ -146,14 +158,16 @@ function renderDeptChart() {
 function renderStatusChart() {
   const chart = initChart(statusChartRef.value);
   if (!chart) return;
+  const statusData = Object.entries(data.value!.consultationByStatus).map(([status, value]) => ({
+    name: consultationStatusMap[Number(status)] || status, value,
+  }));
   chart.setOption({
     tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', right: 10, top: 'center' },
+    legend: { orient: 'horizontal', bottom: 0, left: 'center', textStyle: { fontSize: 11 } },
     series: [{
-      type: 'pie', radius: ['40%', '70%'],
-      data: Object.entries(data.value!.consultationByStatus).map(([status, value]) => ({
-        name: consultationStatusMap[Number(status)] || status, value,
-      })),
+      type: 'pie', radius: ['40%', '68%'], center: ['50%', '45%'],
+      data: statusData,
+      label: { show: statusData.length <= 6, fontSize: 10 },
     }],
   });
 }
@@ -177,7 +191,7 @@ function renderRevenueChart() {
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: data.value.dailyRevenue.map(i => i.date) },
     yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
-    series: [{ type: 'bar', data: data.value.dailyRevenue.map(i => i.amount), itemStyle: { color: '#67c23a' } }],
+    series: [{ type: 'bar', data: data.value.dailyRevenue.map(i => i.amount), itemStyle: { color: '#14b8a6' } }],
   });
 }
 
@@ -196,3 +210,68 @@ async function handleExport() {
   }
 }
 </script>
+
+<style scoped>
+.stats-row,
+.chart-row {
+  margin-bottom: 18px;
+}
+
+.stat-card :deep(.el-card__body) {
+  min-height: 132px;
+  padding: 22px;
+}
+
+.stat-label {
+  color: var(--aicall-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stat-value {
+  margin-top: 14px;
+  color: var(--aicall-text);
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.money {
+  font-size: 30px;
+}
+
+.stat-blue { background: linear-gradient(135deg, #fff, #eff6ff); }
+.stat-teal { background: linear-gradient(135deg, #fff, #f0fdfa); }
+.stat-amber { background: linear-gradient(135deg, #fff, #fffbeb); }
+.stat-green { background: linear-gradient(135deg, #fff, #ecfdf5); }
+
+.chart-card :deep(.el-card__body) {
+  padding: 10px 12px 16px;
+}
+
+.chart-box {
+  height: 300px;
+}
+
+.chart-box.wide {
+  height: 310px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.card-title {
+  color: var(--aicall-text);
+  font-weight: 800;
+}
+
+.card-subtitle {
+  margin-top: 4px;
+  color: var(--aicall-muted);
+  font-size: 12px;
+}
+</style>

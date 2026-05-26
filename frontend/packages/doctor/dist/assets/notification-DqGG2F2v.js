@@ -1,1 +1,0 @@
-import{V as t,ab as r}from"./index-xYQenbZm.js";function i(o=1,n=20){return t("/doctor/notification",{params:{page:o,size:n}})}function c(){return t("/doctor/notification/unread-count")}function e(o){return r(`/doctor/notification/${o}/read`)}export{c as a,i as g,e as m};

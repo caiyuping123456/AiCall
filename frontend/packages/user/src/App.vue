@@ -30,18 +30,12 @@ const showTabbar = computed(() => {
 </script>
 
 <style>
-:root {
-  --primary-color: #1989fa;
-  --bg-color: #f7f8fa;
-  --card-bg: #ffffff;
-  --text-color: #323233;
-  --text-secondary: #969799;
-}
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg-color);
+.app-container {
+  min-height: 100vh;
   color: var(--text-color);
 }
-.app-container { min-height: 100vh; }
+
+.app-container:has(.van-tabbar) {
+  padding-bottom: 82px;
+}
 </style>

@@ -2,14 +2,14 @@
   <div class="page">
     <van-nav-bar title="医生详情" left-arrow @click-left="$router.back()" />
     <div class="content">
-      <div class="profile-card">
+      <div class="profile-card mobile-card">
         <div class="profile-top">
           <div class="profile-avatar">
-            <van-image v-if="doctor.avatar" :src="doctor.avatar" round width="72" height="72" fit="cover" />
+            <van-image v-if="doctor.avatar" :src="doctor.avatar" round width="76" height="76" fit="cover" />
             <div v-else class="avatar-placeholder">{{ doctor.name?.charAt(0) || '医' }}</div>
           </div>
           <div class="profile-meta">
-            <div class="profile-name">{{ doctor.name }}</div>
+            <div class="profile-name">{{ doctor.name || '医生' }}</div>
             <div class="profile-tags">
               <van-tag type="primary" size="medium">{{ doctor.title || '医师' }}</van-tag>
               <van-tag plain size="medium">{{ doctor.department }}</van-tag>
@@ -28,7 +28,7 @@
         </van-button>
       </div>
 
-      <van-dialog v-model:show="showDialog" title="挂号预约" show-cancel-button :before-close="beforeClose">
+      <van-dialog v-model:show="showDialog" title="挂号预约" show-cancel-button :before-close="beforeClose" :confirm-loading="registering">
         <div class="dialog-content">
           <van-field v-model="chiefComplaint" label="主诉" placeholder="请描述您的主要症状" type="textarea" rows="3" maxlength="200" show-word-limit />
         </div>
@@ -42,10 +42,12 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { showToast } from 'vant';
 import { getDoctorDetail, registerConsultation } from '@aicall/shared';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 import type { UserDoctor } from '@aicall/shared';
 
 const router = useRouter();
 const route = useRoute();
+const flow = useConsultationFlowStore();
 const doctor = ref<UserDoctor>({ id: 0, name: '', title: '', department: '', avatar: '', introduction: '' });
 const showDialog = ref(false);
 const chiefComplaint = ref('');
@@ -54,29 +56,38 @@ const registering = ref(false);
 async function handleRegister() {
   if (!chiefComplaint.value.trim()) {
     showToast('请输入主诉');
-    return;
+    throw new Error('VALIDATION'); // prevent dialog from closing
   }
-  if (registering.value) return;
-  registering.value = true;
-  try {
-    const consultationId = await registerConsultation({
-      chiefComplaint: chiefComplaint.value,
-      doctorId: doctor.value.id,
-      department: doctor.value.department,
-    }) as number;
-    showToast('挂号成功，AI正在生成摘要...');
-    router.push(`/consultation/${consultationId}/summary`);
-  } catch (e: any) {
-    showToast(e.message || '挂号失败');
-    registering.value = false;
-  }
+  const consultationId = await registerConsultation({
+    chiefComplaint: chiefComplaint.value,
+    doctorId: doctor.value.id,
+    department: doctor.value.department,
+  }) as number;
+  // Save registration data to flow store for downstream pages (Upload, Pay)
+  flow.setChiefComplaint(chiefComplaint.value);
+  flow.setDepartment(doctor.value.department);
+  flow.setConsultationId(consultationId);
+  // Close dialog before navigation
+  showDialog.value = false;
+  showToast('挂号成功，AI正在生成摘要...');
+  router.push(`/consultation/${consultationId}/summary`);
 }
 
 async function beforeClose(action: string) {
   if (action === 'cancel') return true;
-  await handleRegister();
-  // Only close dialog after successful registration
-  return !registering.value;
+  if (registering.value) return false;
+  registering.value = true;
+  try {
+    await handleRegister();
+  } catch (e: any) {
+    if (e?.message !== 'VALIDATION') {
+      showToast(e.message || '挂号失败');
+    }
+    registering.value = false;
+    return false;
+  }
+  registering.value = false;
+  return false; // Dialog already closed manually on success, or we navigated away
 }
 
 onMounted(async () => {
@@ -90,24 +101,80 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page { min-height: 100vh; background: #f7f8fa; }
-.content { padding: 16px; }
 .profile-card {
-  background: #fff; border-radius: 12px; padding: 24px 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  padding: 22px 18px;
+  margin-bottom: 18px;
 }
-.profile-top { display: flex; align-items: center; gap: 16px; }
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 86px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(20, 184, 166, 0.13));
+}
+
+.profile-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .avatar-placeholder {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: linear-gradient(135deg, #1989fa, #4fc3f7);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 28px; font-weight: 600;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #2563eb, #14b8a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.22);
 }
-.profile-name { font-size: 20px; font-weight: 600; color: #323233; margin-bottom: 8px; }
-.profile-tags { display: flex; gap: 8px; }
-.profile-intro-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid #ebedf0; }
-.section-title { font-size: 15px; font-weight: 600; color: #323233; margin-bottom: 10px; }
-.intro-text { font-size: 14px; color: #646566; line-height: 1.6; }
-.register-section { padding: 0 0 16px; }
-.dialog-content { padding: 16px; }
+
+.profile-name {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--text-color);
+  margin-bottom: 9px;
+}
+
+.profile-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-intro-section {
+  position: relative;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.intro-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.register-section {
+  padding: 0 0 16px;
+}
+
+.dialog-content {
+  padding: 16px;
+}
 </style>

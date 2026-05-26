@@ -71,7 +71,7 @@ public class RegistrationService {
         }
 
         notificationService.send(2, doctor.getId(), "新挂号通知",
-                "您有一个新的会诊挂号，患者主诉：" + request.getChiefComplaint(), List.of(2, 3));
+                "您有一个新的会诊挂号，患者主诉：" + request.getChiefComplaint(), List.of(2));
 
         return c.getId();
     }

@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <van-nav-bar title="病情摘要" left-arrow @click-left="$router.back()" />
+    <van-nav-bar title="病情摘要" left-arrow @click-left="goBack" />
     <van-steps :active="2" active-color="#1989fa">
       <van-step>登录</van-step>
       <van-step>预问诊</van-step>
@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import { getSummary, updateSummary } from '@aicall/shared';
@@ -45,8 +45,23 @@ const generating = ref(false);
 // Otherwise use Pinia store (new flow)
 const hasConsultationId = !!route.params.id;
 
+function goBack() {
+  if (hasConsultationId) {
+    // Registration flow: back to doctor detail
+    router.back();
+  } else {
+    // Full flow: back to chat or form
+    router.back();
+  }
+}
+
+const MAX_RETRIES = 30; // 30 retries × 2s = 60s max wait
+let retryCount = 0;
+let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
 onMounted(() => {
   if (hasConsultationId) {
+    retryCount = 0;
     fetchSummary();
   } else {
     // Load from Pinia store for the new flow
@@ -63,6 +78,13 @@ onMounted(() => {
         ? `主诉：${flow.state.chiefComplaint}`
         : '';
     }
+  }
+});
+
+onUnmounted(() => {
+  if (pollTimer !== null) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
   }
 });
 
@@ -84,7 +106,13 @@ async function fetchSummary() {
       generating.value = false;
     } else {
       generating.value = true;
-      setTimeout(fetchSummary, 2000);
+      retryCount++;
+      if (retryCount > MAX_RETRIES) {
+        generating.value = false;
+        showToast('摘要生成时间较长，请稍后刷新页面查看');
+        return;
+      }
+      pollTimer = setTimeout(fetchSummary, 2000);
     }
   } catch (e: any) {
     showToast(e.message || '获取摘要失败');
@@ -100,11 +128,14 @@ async function confirm() {
   loading.value = true;
 
   if (hasConsultationId) {
-    // Legacy mode: save to API
+    // Registration flow: save summary, store ID, then continue to upload → pay
     const consultationId = Number(route.params.id);
     try {
       await updateSummary(consultationId, summary.value);
-      router.push(`/consultation/${consultationId}/upload`);
+      flow.setMedicalSummary(summary.value);
+      flow.setConsultationId(consultationId);
+      flow.nextStep(4);
+      router.push('/consultation/upload');
     } catch (e: any) {
       showToast(e.message || '保存失败');
     }

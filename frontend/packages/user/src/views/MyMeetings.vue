@@ -6,7 +6,7 @@
       <van-cell-group inset v-for="item in list" :key="item.id" style="margin-bottom: 12px">
         <van-cell :title="item.consultationNo" :label="item.department || '未知科室'" is-link @click="goDetail(item)">
           <template #value>
-            <van-tag :type="statusTag[item.status] || ''" size="medium">
+            <van-tag :type="statusTag[String(item.status)] || 'default'" size="medium">
               {{ statusMap[item.status] || '未知' }}
             </van-tag>
           </template>
@@ -22,6 +22,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
+import type { TagType } from 'vant';
 import { getMeetings } from '@aicall/shared';
 
 const router = useRouter();
@@ -29,10 +30,10 @@ const loading = ref(false);
 const list = ref<any[]>([]);
 
 const statusMap: Record<string, string> = {
-  '3': '已排期', '4': '待会诊', '5': '会诊中', '6': '已完成',
+  '3': '已排期', '4': '待会诊', '5': '报告已签发', '6': '已完成',
 };
-const statusTag: Record<string, string> = {
-  '3': 'primary', '4': 'warning', '5': 'danger', '6': 'success',
+const statusTag: Record<string, TagType> = {
+  '3': 'primary', '4': 'warning', '5': 'primary', '6': 'success',
 };
 
 onMounted(loadData);
@@ -49,7 +50,7 @@ async function loadData() {
 }
 
 function goDetail(item: any) {
-  if (item.status === 3 || item.status === 4 || item.status === 5) {
+  if (item.status === 3 || item.status === 4) {
     router.push(`/consultation/${item.id}/room`);
   } else if (item.status >= 3) {
     router.push(`/consultation/${item.id}/status`);

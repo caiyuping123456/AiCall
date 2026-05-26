@@ -1,6 +1,8 @@
 package com.aicall.infrastructure.websocket;
 
 import com.aicall.module.live.entity.LiveSubtitle;
+import com.aicall.module.live.entity.LiveRoom;
+import com.aicall.module.live.mapper.LiveRoomMapper;
 import com.aicall.module.live.mapper.LiveSubtitleMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,10 +30,14 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper;
     private final LiveSubtitleMapper liveSubtitleMapper;
+    private final LiveRoomMapper liveRoomMapper;
 
-    public WebSocketHandler(ObjectMapper objectMapper, LiveSubtitleMapper liveSubtitleMapper) {
+    public WebSocketHandler(ObjectMapper objectMapper,
+                            LiveSubtitleMapper liveSubtitleMapper,
+                            LiveRoomMapper liveRoomMapper) {
         this.objectMapper = objectMapper;
         this.liveSubtitleMapper = liveSubtitleMapper;
+        this.liveRoomMapper = liveRoomMapper;
     }
 
     @Override
@@ -63,8 +69,15 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 String userName = node.has("userName") ? node.get("userName").asText() : "";
                 String text = node.get("text").asText();
 
+                // Resolve roomId: prefer explicit field, otherwise look up from consultation
+                Long roomId = node.has("roomId") ? node.get("roomId").asLong() : null;
+                if (roomId == null && consultationId != null) {
+                    LiveRoom room = liveRoomMapper.findByConsultationId(Long.parseLong(consultationId));
+                    if (room != null) roomId = room.getId();
+                }
+
                 LiveSubtitle subtitle = new LiveSubtitle();
-                subtitle.setRoomId(node.has("roomId") ? node.get("roomId").asLong() : null);
+                subtitle.setRoomId(roomId);
                 subtitle.setUserId(userId);
                 subtitle.setUserName(userName);
                 subtitle.setContent(text);
