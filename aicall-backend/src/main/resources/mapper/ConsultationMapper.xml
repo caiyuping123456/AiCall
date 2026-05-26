@@ -104,4 +104,14 @@
         GROUP BY DATE(create_time)
         ORDER BY DATE(create_time)
     </select>
+
+    <select id="countByPatientDoctorToday" resultType="int">
+        SELECT COUNT(*)
+        FROM consultation c
+        JOIN consultation_doctor cd ON c.id = cd.consultation_id
+        WHERE c.patient_id = #{patientId}
+          AND cd.doctor_id = #{doctorId}
+          AND DATE(c.create_time) = CURDATE()
+          AND c.status NOT IN (7, 8)
+    </select>
 </mapper>

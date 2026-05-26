@@ -44,4 +44,7 @@ public interface ConsultationMapper {
     void updateMinutes(@Param("id") Long id, @Param("minutes") String minutes);
 
     List<Map<String, Object>> countDailyTrend(@Param("startDate") String startDate);
+
+    int countByPatientDoctorToday(@Param("patientId") Long patientId,
+                                  @Param("doctorId") Long doctorId);
 }
