@@ -1,11 +1,16 @@
 package com.aicall.module.consultation.controller;
 
 import com.aicall.common.annotation.Log;
+import com.aicall.common.exception.BusinessException;
 import com.aicall.common.result.Result;
 import com.aicall.module.consultation.dto.*;
 import com.aicall.module.consultation.entity.Consultation;
 import com.aicall.module.consultation.entity.ConsultationUpload;
+import com.aicall.module.consultation.entity.Report;
+import com.aicall.module.consultation.mapper.ConsultationMapper;
+import com.aicall.module.consultation.mapper.ReportMapper;
 import com.aicall.module.consultation.service.ConsultationService;
+import com.aicall.module.doctor.dto.ReportVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -21,6 +26,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserConsultationController {
     private final ConsultationService consultationService;
+    private final ConsultationMapper consultationMapper;
+    private final ReportMapper reportMapper;
 
     @PostMapping("/draft")
     @Log("创建会诊草稿")
@@ -113,6 +120,28 @@ public class UserConsultationController {
     public Result<List<Consultation>> query() {
         Long patientId = getCurrentPatientId();
         return Result.success(consultationService.queryByPatientId(patientId));
+    }
+
+    @GetMapping("/{id}/report")
+    @Log("获取已签发报告")
+    public Result<ReportVO> getReport(@PathVariable Long id, Authentication auth) {
+        Long patientId = (Long) auth.getPrincipal();
+        Consultation c = consultationMapper.findById(id);
+        if (c == null || !c.getPatientId().equals(patientId)) {
+            throw BusinessException.fail("无权查看该报告");
+        }
+        if (c.getStatus() < 5) {
+            throw BusinessException.fail("报告尚未签发");
+        }
+        Report report = reportMapper.findByConsultationId(id);
+        if (report == null) throw BusinessException.fail("报告不存在");
+
+        ReportVO vo = new ReportVO();
+        vo.setId(report.getId());
+        vo.setContent(report.getContent());
+        vo.setStatus(report.getStatus());
+        vo.getFields(); // trigger lazy parse
+        return Result.success(vo);
     }
 
     private Long getCurrentPatientId() {
