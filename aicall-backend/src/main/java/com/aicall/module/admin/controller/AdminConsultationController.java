@@ -5,11 +5,14 @@ import com.aicall.module.admin.dto.AdminAssignDoctorsRequest;
 import com.aicall.module.admin.dto.AdminConsultationCancelRequest;
 import com.aicall.module.admin.dto.AdminConsultationDetailVO;
 import com.aicall.module.admin.dto.AdminConsultationListItemVO;
+import com.aicall.module.admin.dto.TimelineItemVO;
 import com.aicall.module.admin.service.AdminConsultationService;
 import com.aicall.module.common.dto.PageResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import java.util.List;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -49,5 +52,10 @@ public class AdminConsultationController {
                                @Valid @RequestBody AdminConsultationCancelRequest request) {
         adminConsultationService.cancelConsultation(id, request.getReason());
         return Result.success();
+    }
+
+    @GetMapping("/{id}/timeline")
+    public Result<List<TimelineItemVO>> getTimeline(@PathVariable Long id) {
+        return Result.success(adminConsultationService.getTimeline(id));
     }
 }

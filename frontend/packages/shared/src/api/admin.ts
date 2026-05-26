@@ -117,6 +117,17 @@ export function assignConsultationDoctors(id: number, doctors: { doctorId: numbe
   return post(`/admin/consultations/${id}/doctors`, { doctors });
 }
 
+export interface TimelineItem {
+  status: number;
+  label: string;
+  time: string;
+  operator: string;
+}
+
+export function getConsultationTimeline(id: number) {
+  return get<TimelineItem[]>(`/admin/consultations/${id}/timeline`);
+}
+
 export interface AdminDepartment {
   id: number;
   name: string;

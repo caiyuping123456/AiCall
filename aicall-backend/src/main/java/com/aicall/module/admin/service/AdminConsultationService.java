@@ -5,19 +5,24 @@ import com.aicall.module.admin.dto.AdminAssignDoctorsRequest;
 import com.aicall.module.admin.dto.AdminConsultationCancelRequest;
 import com.aicall.module.admin.dto.AdminConsultationDetailVO;
 import com.aicall.module.admin.dto.AdminConsultationListItemVO;
+import com.aicall.module.admin.dto.TimelineItemVO;
 import com.aicall.module.common.dto.PageResult;
 import com.aicall.module.consultation.entity.Consultation;
 import com.aicall.module.consultation.entity.ConsultationDoctor;
 import com.aicall.module.consultation.entity.ConsultationUpload;
+import com.aicall.module.consultation.entity.Report;
 import com.aicall.module.consultation.mapper.ConsultationDoctorMapper;
 import com.aicall.module.consultation.mapper.ConsultationMapper;
 import com.aicall.module.consultation.mapper.ConsultationUploadMapper;
+import com.aicall.module.consultation.mapper.ReportMapper;
 import com.aicall.module.doctor.entity.Doctor;
 import com.aicall.module.doctor.mapper.DoctorMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,6 +31,7 @@ public class AdminConsultationService {
     private final ConsultationMapper consultationMapper;
     private final ConsultationDoctorMapper consultationDoctorMapper;
     private final ConsultationUploadMapper uploadMapper;
+    private final ReportMapper reportMapper;
     private final DoctorMapper doctorMapper;
 
     public PageResult<AdminConsultationListItemVO> getConsultations(Integer status, String keyword, Integer page, Integer size) {
@@ -111,6 +117,69 @@ public class AdminConsultationService {
             throw BusinessException.fail("会诊不存在");
         }
         consultationMapper.updateCancel(id, 7, reason);
+    }
+
+    public List<TimelineItemVO> getTimeline(Long consultationId) {
+        Consultation c = consultationMapper.findById(consultationId);
+        if (c == null) {
+            throw BusinessException.fail("会诊不存在");
+        }
+
+        List<TimelineItemVO> timeline = new ArrayList<>();
+
+        // Status 0: Patient submitted
+        timeline.add(item(0, "患者提交", c.getCreateTime(), c.getPatientName()));
+
+        // Status 1: AI summary generated
+        if (c.getMedicalSummary() != null) {
+            timeline.add(item(1, "AI资料审核完成", null, "系统"));
+        }
+
+        // Status 2 + 3: Admin assigned doctors + doctor confirmed/rejected
+        List<ConsultationDoctor> doctors = consultationDoctorMapper.findByConsultationId(consultationId);
+        if (!doctors.isEmpty()) {
+            timeline.add(item(2, "管理员分配医生", null, "管理员"));
+        }
+        for (ConsultationDoctor cd : doctors) {
+            Doctor d = doctorMapper.findById(cd.getDoctorId());
+            String name = d != null ? d.getName() : String.valueOf(cd.getDoctorId());
+            if (cd.getStatus() != null && cd.getStatus() == 1) {
+                timeline.add(item(3, "医生" + name + "确认接诊", cd.getConfirmTime(), name));
+            } else if (cd.getStatus() != null && cd.getStatus() == 2) {
+                timeline.add(item(3, "医生" + name + "拒绝接诊", cd.getConfirmTime(), name));
+            }
+        }
+
+        // Status 4: AI report generated + Status 5: Signed
+        Report report = reportMapper.findByConsultationId(consultationId);
+        if (report != null) {
+            timeline.add(item(4, "AI报告生成", report.getCreateTime(), "系统"));
+            if (report.getStatus() != null && report.getStatus() >= 2 && report.getSignedTime() != null) {
+                Doctor signer = doctorMapper.findById(report.getSignedBy());
+                timeline.add(item(5, "报告签发", report.getSignedTime(), signer != null ? signer.getName() : ""));
+            }
+        }
+
+        // Status 6: Completed
+        if (c.getStatus() != null && c.getStatus() >= 6 && c.getEndTime() != null) {
+            timeline.add(item(6, "会诊完成", c.getEndTime(), "系统"));
+        }
+
+        // Status 7: Cancelled
+        if (c.getStatus() != null && c.getStatus() == 7) {
+            timeline.add(item(7, "已取消：" + (c.getCancelReason() != null ? c.getCancelReason() : ""), c.getUpdateTime(), "管理员"));
+        }
+
+        return timeline;
+    }
+
+    private TimelineItemVO item(int status, String label, java.time.LocalDateTime time, String operator) {
+        TimelineItemVO vo = new TimelineItemVO();
+        vo.setStatus(status);
+        vo.setLabel(label);
+        vo.setTime(time != null ? time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : null);
+        vo.setOperator(operator);
+        return vo;
     }
 
     private AdminConsultationListItemVO toListItem(Consultation c) {
