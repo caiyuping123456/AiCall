@@ -13,11 +13,13 @@
       <div style="margin-bottom: 16px" v-if="detail.status === 4 && detail.report?.status === 0">
         <el-button type="primary" @click="router.push(`/consultations/${id}/report`)">编辑报告</el-button>
       </div>
-      <div style="margin-bottom: 16px" v-if="detail.status === 3 || detail.status === 4 || detail.status === 5">
-        <el-button v-if="detail.status !== 5" type="success" @click="router.push(`/consultations/${id}/room`)">
-          进入会诊室
-        </el-button>
-        <el-tag v-else type="warning" size="large">会诊进行中</el-tag>
+      <div style="margin-bottom: 16px" v-if="detail.status === 3 || detail.status === 4">
+        <el-button type="success" @click="router.push(`/consultations/${id}/room`)">进入会诊室</el-button>
+      </div>
+      <div style="margin-bottom: 16px" v-if="detail.status === 5 || detail.status === 6">
+        <el-tag :type="detail.status === 6 ? 'info' : 'success'" size="large">
+          {{ detail.status === 6 ? '已完成' : '报告已签发' }}
+        </el-tag>
       </div>
 
       <el-tabs>
@@ -78,6 +80,15 @@
           </el-button>
         </el-tab-pane>
 
+        <el-tab-pane label="报告详情" v-if="detail.report?.fields">
+          <div style="max-width: 800px">
+            <el-card v-for="(label, key) in reportFieldLabels" :key="key" style="margin-bottom: 12px">
+              <template #header><strong>{{ label }}</strong></template>
+              <div style="white-space: pre-wrap; line-height: 1.8">{{ detail.report.fields[key] || '无' }}</div>
+            </el-card>
+          </div>
+        </el-tab-pane>
+
         <el-tab-pane label="随访记录">
           <el-table :data="followUps" stripe v-loading="followUpLoading">
             <el-table-column label="随访天数">
@@ -129,6 +140,16 @@ const rejectReason = ref('');
 const followUps = ref<any[]>([]);
 const followUpLoading = ref(false);
 
+const reportFieldLabels: Record<string, string> = {
+  chiefComplaint: '主诉',
+  presentIllness: '现病史',
+  pastHistory: '既往史',
+  examinationFindings: '检查所见',
+  diagnosis: '诊断意见',
+  analysis: '分析说明',
+  recommendation: '建议',
+  followUp: '随访建议',
+};
 onMounted(() => loadData());
 
 async function loadData() {

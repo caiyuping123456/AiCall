@@ -98,6 +98,7 @@ export interface ReportData {
   status: number;
   signedByName: string;
   signedTime: string;
+  fields?: Record<string, string>;
   qcResult: QcResultData | null;
 }
 
