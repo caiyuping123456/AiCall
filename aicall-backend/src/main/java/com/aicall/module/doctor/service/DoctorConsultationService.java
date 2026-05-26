@@ -13,6 +13,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class DoctorConsultationService {
     private final ReportGenerateService reportGenerateService;
     private final QcService qcService;
     private final PreDiagnosisService preDiagnosisService;
+    private final ObjectProvider<DoctorConsultationService> selfProvider;
 
     public WorkbenchVO getWorkbench(Long doctorId) {
         List<ConsultationDoctor> assignments = consultationDoctorMapper.findByDoctorId(doctorId);
@@ -195,7 +197,6 @@ public class DoctorConsultationService {
         consultationMapper.updateStatus(consultationId, 8);
     }
 
-    @Transactional
     public ReportVO generateReport(Long doctorId, Long consultationId) {
         ConsultationDoctor cd = consultationDoctorMapper.findByConsultationAndDoctor(consultationId, doctorId);
         if (cd == null || cd.getStatus() != 1) throw BusinessException.fail("无权操作该会诊");
@@ -203,8 +204,15 @@ public class DoctorConsultationService {
         Consultation c = consultationMapper.findById(consultationId);
         if (c.getStatus() != 3) throw BusinessException.fail("会诊状态不正确");
 
+        // LLM call OUTSIDE transaction — don't hold DB connection
         String reportContent = reportGenerateService.generateReport(consultationId);
 
+        // DB operations in their own transaction via proxy (self-invocation needs proxy)
+        return selfProvider.getObject().saveReportAndUpdateStatus(consultationId, reportContent);
+    }
+
+    @Transactional
+    ReportVO saveReportAndUpdateStatus(Long consultationId, String reportContent) {
         Report report = new Report();
         report.setConsultationId(consultationId);
         report.setType(1);

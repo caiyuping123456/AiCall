@@ -62,6 +62,7 @@ public class AiConfig {
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
                 .modelName(chatModel)
+                .timeout(java.time.Duration.ofSeconds(60))
                 .build();
     }
 

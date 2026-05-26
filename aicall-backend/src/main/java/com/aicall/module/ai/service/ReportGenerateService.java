@@ -1,5 +1,6 @@
 package com.aicall.module.ai.service;
 
+import com.aicall.common.exception.BusinessException;
 import com.aicall.module.consultation.entity.Consultation;
 import com.aicall.module.consultation.entity.ConsultationUpload;
 import com.aicall.module.consultation.entity.ReportTemplate;
@@ -93,6 +94,11 @@ public class ReportGenerateService {
             );
 
         log.info("Generating report for consultation {}", consultationId);
-        return chatLanguageModel.generate(prompt);
+        try {
+            return chatLanguageModel.generate(prompt);
+        } catch (Exception e) {
+            log.error("Report generation failed for consultation {}: {}", consultationId, e.getMessage());
+            throw BusinessException.fail("AI报告生成失败，请稍后重试");
+        }
     }
 }
