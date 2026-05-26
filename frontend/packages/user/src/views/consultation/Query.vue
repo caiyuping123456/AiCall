@@ -3,7 +3,11 @@
     <van-nav-bar title="查询会诊" left-arrow @click-left="$router.back()" />
     <div class="content">
       <van-cell-group inset v-if="list.length > 0">
-        <van-cell v-for="item in list" :key="item.id" :title="item.consultationNo" :label="`状态: ${statusText(item.status)}`" is-link @click="goDetail(item)" />
+        <van-cell v-for="item in list" :key="item.id" :title="item.consultationNo" :label="`状态: ${statusText(item.status)}`" is-link @click="goDetail(item)">
+          <template #extra>
+            <van-button v-if="item.status >= 5" size="small" type="primary" @click.stop="viewReport(item)">查看报告</van-button>
+          </template>
+        </van-cell>
       </van-cell-group>
       <van-empty v-else description="暂无会诊记录" />
     </div>
@@ -26,6 +30,10 @@ function goDetail(item: any) {
   } else {
     router.push(`/consultation/${item.id}/summary`);
   }
+}
+
+function viewReport(item: any) {
+  router.push(`/consultation/${item.id}/report`);
 }
 
 onMounted(async () => {

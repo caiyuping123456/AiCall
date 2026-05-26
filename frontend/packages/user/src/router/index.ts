@@ -34,6 +34,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/consultation/pay', name: 'Pay', component: Pay, meta: { title: '确认支付', requiresAuth: true } },
   { path: '/consultation/success', name: 'Success', component: Success, meta: { title: '支付成功', requiresAuth: true } },
   // Legacy route for viewing existing consultation summary with ID
+  { path: '/consultation/:id/report', component: () => import('@/views/consultation/ReportView.vue'), meta: { title: '会诊报告', requiresAuth: true } },
   { path: '/consultation/:id/summary', component: Summary, meta: { title: '病情摘要', requiresAuth: true } },
   { path: '/consultation/:id/status', name: 'ConsultationStatus', component: Status, meta: { title: '会诊详情', requiresAuth: true } },
   { path: '/consultation/:id/room', name: 'ConsultationRoom', component: Room, meta: { title: '会诊室', requiresAuth: true } },

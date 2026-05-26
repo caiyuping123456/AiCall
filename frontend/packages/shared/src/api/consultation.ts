@@ -72,6 +72,10 @@ export function queryConsultations() {
   return get('/user/consultation/query');
 }
 
+export function getUserReport(consultationId: number) {
+  return get<{ id: number; content: string; status: number; fields: Record<string, string> }>(`/user/consultation/${consultationId}/report`);
+}
+
 export interface SubmitConsultationRequest {
   department: string;
   type: number;
