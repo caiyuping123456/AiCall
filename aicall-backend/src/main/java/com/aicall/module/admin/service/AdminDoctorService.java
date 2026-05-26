@@ -54,7 +54,7 @@ public class AdminDoctorService {
         doctor.setTitle(request.getTitle());
         doctor.setDepartment(request.getDepartment());
         doctor.setPhone(request.getPhone());
-        doctor.setIntroduction(null);
+        doctor.setIntroduction(request.getIntroduction());
         doctor.setStatus(1);
         doctorMapper.insert(doctor);
     }

@@ -16,6 +16,7 @@ export * from './api/live';
 
 export * from './api/followup';
 export * from './api/evaluation';
+export * from './api/department';
 export * from './api/notification';
 export * from './api/profile';
 export * from './api/knowledge';

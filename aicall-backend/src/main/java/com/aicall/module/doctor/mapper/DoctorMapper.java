@@ -15,4 +15,5 @@ public interface DoctorMapper {
     void insert(Doctor doctor);
     void updateById(Doctor doctor);
     void updateStatus(@Param("id") Long id, @Param("status") Integer status);
+    List<Doctor> findByDepartment(@Param("department") String department);
 }

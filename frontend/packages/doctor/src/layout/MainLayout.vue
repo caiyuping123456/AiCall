@@ -11,6 +11,11 @@
           <el-icon><Document /></el-icon>
           <span>会诊列表</span>
         </el-menu-item>
+        <el-menu-item index="/notifications">
+          <el-icon><Bell /></el-icon>
+          <span>通知</span>
+          <el-badge v-if="unreadCount > 0" :value="unreadCount" :max="99" style="margin-left: 8px" />
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -26,15 +31,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Odometer, Document } from '@element-plus/icons-vue';
+import { Odometer, Document, Bell } from '@element-plus/icons-vue';
+import { getDoctorUnreadCount } from '@aicall/shared';
 
 const route = useRoute();
 const router = useRouter();
 
 const doctorName = computed(() => localStorage.getItem('doctorName') || '');
 const department = computed(() => localStorage.getItem('department') || '');
+const unreadCount = ref(0);
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+async function fetchUnread() {
+  try {
+    const res = await getDoctorUnreadCount() as any;
+    unreadCount.value = res?.count ?? 0;
+  } catch {}
+}
 
 function handleLogout() {
   localStorage.removeItem('token');
@@ -43,4 +58,13 @@ function handleLogout() {
   localStorage.removeItem('department');
   router.push('/login');
 }
+
+onMounted(() => {
+  fetchUnread();
+  pollTimer = setInterval(fetchUnread, 60000);
+});
+
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer);
+});
 </script>

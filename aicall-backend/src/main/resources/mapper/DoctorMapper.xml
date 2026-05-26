@@ -54,4 +54,9 @@
     <update id="updateStatus">
         UPDATE doctor SET status = #{status} WHERE id = #{id}
     </update>
+
+    <select id="findByDepartment" resultType="com.aicall.module.doctor.entity.Doctor">
+        SELECT id, name, title, department, phone, avatar, introduction FROM doctor
+        WHERE department = #{department} AND status = 1
+    </select>
 </mapper>
