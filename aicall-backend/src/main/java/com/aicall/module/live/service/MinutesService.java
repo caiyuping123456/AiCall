@@ -10,7 +10,6 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,7 +53,6 @@ public class MinutesService {
     private final ConsultationMapper consultationMapper;
     private final ChatLanguageModel chatLanguageModel;
 
-    @Transactional
     public String generateMinutes(Long consultationId) {
         LiveRoom room = liveRoomMapper.findByConsultationId(consultationId);
         if (room == null) throw BusinessException.fail("会诊室不存在");
@@ -70,7 +68,6 @@ public class MinutesService {
         String minutes = chatLanguageModel.generate(prompt);
 
         consultationMapper.updateMinutes(consultationId, minutes);
-        consultationMapper.updateStatus(consultationId, 6);
 
         return minutes;
     }

@@ -2,17 +2,20 @@ package com.aicall.module.live.controller;
 
 import com.aicall.common.annotation.Log;
 import com.aicall.common.result.Result;
+import com.aicall.module.consultation.mapper.ConsultationMapper;
 import com.aicall.module.live.dto.*;
 import com.aicall.module.evaluation.service.EvaluationService;
 import com.aicall.module.followup.service.FollowUpService;
 import com.aicall.module.live.service.LiveRoomService;
 import com.aicall.module.live.service.MinutesService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/live/rooms")
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class LiveRoomController {
     private final MinutesService minutesService;
     private final FollowUpService followUpService;
     private final EvaluationService evaluationService;
+    private final ConsultationMapper consultationMapper;
 
     @PostMapping
     @Log("创建会诊室")
@@ -44,12 +48,16 @@ public class LiveRoomController {
     @Log("结束会诊")
     public Result<RoomVO> endRoom(@PathVariable Long id) {
         RoomVO room = liveRoomService.endRoom(id);
+        // Immediately mark consultation as completed — don't block on LLM
+        consultationMapper.updateStatus(room.getConsultationId(), 6);
+        // Generate minutes & follow-ups asynchronously
         new Thread(() -> {
             try {
                 minutesService.generateMinutes(room.getConsultationId());
                 followUpService.createFollowUps(room.getConsultationId());
                 evaluationService.createEvaluation(room.getConsultationId());
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.error("Post-consultation processing failed for {}: {}", room.getConsultationId(), e.getMessage());
             }
         }).start();
         return Result.success(room);
