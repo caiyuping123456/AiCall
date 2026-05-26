@@ -3,7 +3,7 @@
     <el-page-header @back="router.back()" title="返回" content="会诊详情" style="margin-bottom: 20px" />
 
     <template v-if="detail">
-      <div style="margin-bottom: 16px" v-if="detail.status !== 7 && detail.status !== 6">
+      <div style="margin-bottom: 16px" v-if="detail.status !== 6 && detail.status !== 7 && detail.status !== 8">
         <el-button type="danger" @click="showCancelDialog = true">取消会诊</el-button>
       </div>
 
@@ -28,6 +28,21 @@
         </el-descriptions-item>
         <el-descriptions-item label="取消原因" :span="2" v-if="detail.cancelReason">{{ detail.cancelReason }}</el-descriptions-item>
       </el-descriptions>
+
+      <el-card header="流程追踪" style="margin-bottom: 20px">
+        <el-timeline v-if="timeline.length">
+          <el-timeline-item
+            v-for="item in timeline"
+            :key="item.status"
+            :timestamp="item.time"
+            :color="item.status === detail.status ? '#409eff' : ''"
+          >
+            {{ item.label }}
+            <span style="color: #999; font-size: 12px; margin-left: 8px">{{ item.operator }}</span>
+          </el-timeline-item>
+        </el-timeline>
+        <div v-else style="text-align: center; color: #999; padding: 20px">暂无流程记录</div>
+      </el-card>
 
       <el-card header="指派医生" style="margin-bottom: 20px">
         <template #header>
@@ -135,7 +150,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { getAdminConsultationDetail, cancelAdminConsultation, getAdminDoctors, assignConsultationDoctors, getLiveRoomByConsultation, getLiveRecordings, type Recording, type AdminDoctorListItem } from '@aicall/shared';
+import { getAdminConsultationDetail, cancelAdminConsultation, getAdminDoctors, assignConsultationDoctors, getLiveRoomByConsultation, getLiveRecordings, getConsultationTimeline, type Recording, type AdminDoctorListItem, type TimelineItem } from '@aicall/shared';
 
 const route = useRoute();
 const router = useRouter();
@@ -149,12 +164,13 @@ const showAssignDialog = ref(false);
 const assignRows = ref([{ doctorId: null as unknown as number, role: 0 }]);
 const allDoctors = ref<AdminDoctorListItem[]>([]);
 const recordings = ref<Recording[]>([]);
+const timeline = ref<TimelineItem[]>([]);
 const showPlayer = ref(false);
 const playingUrl = ref('');
 
 const consultationStatusMap: Record<number, string> = {
   0: '已提交', 1: '资料审核中', 2: '专家确认中', 3: '已排期',
-  4: '待会诊', 5: '会诊中', 6: '已完成', 7: '已取消', 8: '已退回',
+  4: '待会诊', 5: '报告已签发', 6: '已完成', 7: '已取消', 8: '已退回',
 };
 
 onMounted(() => loadData());
@@ -169,6 +185,9 @@ async function loadData() {
         recordings.value = await getLiveRecordings(room.id);
       }
     } catch { /* recordings optional */ }
+    try {
+      timeline.value = await getConsultationTimeline(id);
+    } catch { /* timeline optional */ }
   } catch (e: any) {
     ElMessage.error(e.message || '加载失败');
   } finally {
@@ -226,7 +245,9 @@ async function handleCancel() {
 }
 
 function statusTagType(status: number): string {
-  const map: Record<number, string> = { 0: 'info', 2: 'warning', 3: '', 5: '', 6: 'success', 7: 'danger', 8: 'danger' };
+  const map: Record<number, string> = {
+    0: 'info', 1: 'warning', 2: 'warning', 3: '', 4: 'warning', 5: 'success', 6: 'success', 7: 'danger', 8: 'danger'
+  };
   return map[status] || 'info';
 }
 </script>
