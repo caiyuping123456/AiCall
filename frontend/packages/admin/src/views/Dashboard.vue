@@ -1,5 +1,10 @@
 <template>
   <div v-loading="loading">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+      <h3 style="margin: 0">数据概览</h3>
+      <el-button type="primary" size="small" @click="loadData" :loading="loading">刷新数据</el-button>
+    </div>
+
     <el-row :gutter="16" style="margin-bottom: 20px">
       <el-col :span="6">
         <el-card shadow="hover">
@@ -65,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import * as echarts from 'echarts';
 import { getAdminDashboard, exportAdminDashboard, type AdminDashboardData } from '@aicall/shared';
 import { ElMessage } from 'element-plus';
@@ -77,12 +82,34 @@ const statusChartRef = ref<HTMLElement>();
 const trendChartRef = ref<HTMLElement>();
 const revenueChartRef = ref<HTMLElement>();
 
-const consultationStatusMap: Record<string, string> = {
-  '0': '已提交', '1': '资料审核中', '2': '专家确认中', '3': '已排期',
-  '4': '待会诊', '5': '会诊中', '6': '已完成', '7': '已取消', '8': '已退回',
+const chartInstances: echarts.ECharts[] = [];
+
+const consultationStatusMap: Record<number, string> = {
+  0: '已提交', 1: '资料审核中', 2: '专家确认中', 3: '已排期',
+  4: '待会诊', 5: '报告已签发', 6: '已完成', 7: '已取消', 8: '已退回',
 };
 
-onMounted(() => loadData());
+function initChart(el: HTMLElement | undefined): echarts.ECharts | null {
+  if (!el) return null;
+  const chart = echarts.init(el);
+  chartInstances.push(chart);
+  return chart;
+}
+
+function handleResize() {
+  chartInstances.forEach(c => c.resize());
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize);
+  loadData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  chartInstances.forEach(c => c.dispose());
+  chartInstances.length = 0;
+});
 
 async function loadData() {
   loading.value = true;
@@ -97,50 +124,61 @@ async function loadData() {
 
 function renderCharts() {
   if (!data.value) return;
+  try { renderDeptChart(); } catch (e) { console.error('Dept chart', e); }
+  try { renderStatusChart(); } catch (e) { console.error('Status chart', e); }
+  try { renderTrendChart(); } catch (e) { console.error('Trend chart', e); }
+  try { renderRevenueChart(); } catch (e) { console.error('Revenue chart', e); }
+}
 
-  if (deptChartRef.value) {
-    const chart = echarts.init(deptChartRef.value);
-    chart.setOption({
-      tooltip: { trigger: 'item' },
-      series: [{
-        type: 'pie', radius: ['40%', '70%'],
-        data: Object.entries(data.value.byDepartment).map(([name, value]) => ({ name, value })),
-      }],
-    });
-  }
+function renderDeptChart() {
+  const chart = initChart(deptChartRef.value);
+  if (!chart) return;
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { orient: 'vertical', right: 10, top: 'center' },
+    series: [{
+      type: 'pie', radius: ['40%', '70%'],
+      data: Object.entries(data.value!.byDepartment).map(([name, value]) => ({ name, value })),
+    }],
+  });
+}
 
-  if (statusChartRef.value) {
-    const chart = echarts.init(statusChartRef.value);
-    chart.setOption({
-      tooltip: { trigger: 'item' },
-      series: [{
-        type: 'pie', radius: ['40%', '70%'],
-        data: Object.entries(data.value.consultationByStatus).map(([status, value]) => ({
-          name: consultationStatusMap[status] || status, value,
-        })),
-      }],
-    });
-  }
+function renderStatusChart() {
+  const chart = initChart(statusChartRef.value);
+  if (!chart) return;
+  chart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { orient: 'vertical', right: 10, top: 'center' },
+    series: [{
+      type: 'pie', radius: ['40%', '70%'],
+      data: Object.entries(data.value!.consultationByStatus).map(([status, value]) => ({
+        name: consultationStatusMap[Number(status)] || status, value,
+      })),
+    }],
+  });
+}
 
-  if (trendChartRef.value) {
-    const chart = echarts.init(trendChartRef.value);
-    chart.setOption({
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: data.value.dailyTrend.map(i => i.date) },
-      yAxis: { type: 'value' },
-      series: [{ type: 'line', data: data.value.dailyTrend.map(i => i.count), smooth: true, areaStyle: {} }],
-    });
-  }
+function renderTrendChart() {
+  const chart = initChart(trendChartRef.value);
+  if (!chart) return;
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: data.value!.dailyTrend.map(i => i.date) },
+    yAxis: { type: 'value' },
+    series: [{ type: 'line', data: data.value!.dailyTrend.map(i => i.count), smooth: true, areaStyle: {} }],
+  });
+}
 
-  if (revenueChartRef.value && data.value.dailyRevenue) {
-    const chart = echarts.init(revenueChartRef.value);
-    chart.setOption({
-      tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: data.value.dailyRevenue.map(i => i.date) },
-      yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
-      series: [{ type: 'bar', data: data.value.dailyRevenue.map(i => i.amount), itemStyle: { color: '#67c23a' } }],
-    });
-  }
+function renderRevenueChart() {
+  if (!data.value?.dailyRevenue) return;
+  const chart = initChart(revenueChartRef.value);
+  if (!chart) return;
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: data.value.dailyRevenue.map(i => i.date) },
+    yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
+    series: [{ type: 'bar', data: data.value.dailyRevenue.map(i => i.amount), itemStyle: { color: '#67c23a' } }],
+  });
 }
 
 async function handleExport() {
