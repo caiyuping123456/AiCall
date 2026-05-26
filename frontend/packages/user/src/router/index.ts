@@ -26,13 +26,15 @@ const routes: RouteRecordRaw[] = [
   { path: '/profile/complete', name: 'ProfileComplete', component: ProfileComplete, meta: { title: '完善资料', requiresAuth: true } },
   { path: '/', name: 'Home', component: Home, meta: { title: '首页', requiresAuth: true } },
   { path: '/consultation/start', name: 'Start', component: Start, meta: { title: '选择预问诊方式', requiresAuth: true } },
-  { path: '/consultation/:id/chat', name: 'Chat', component: Chat, meta: { title: 'AI预问诊', requiresAuth: true } },
-  { path: '/consultation/:id/form', name: 'Form', component: Form, meta: { title: '填写病情', requiresAuth: true } },
-  { path: '/consultation/:id/summary', name: 'Summary', component: Summary, meta: { title: '病情摘要', requiresAuth: true } },
-  { path: '/consultation/:id/upload', name: 'Upload', component: Upload, meta: { title: '上传资料', requiresAuth: true } },
-  { path: '/consultation/:id/select-type', name: 'SelectType', component: SelectType, meta: { title: '选择会诊类型', requiresAuth: true } },
-  { path: '/consultation/:id/pay', name: 'Pay', component: Pay, meta: { title: '确认支付', requiresAuth: true } },
-  { path: '/consultation/:id/success', name: 'Success', component: Success, meta: { title: '支付成功', requiresAuth: true } },
+  { path: '/consultation/chat', name: 'Chat', component: Chat, meta: { title: 'AI预问诊', requiresAuth: true } },
+  { path: '/consultation/form', name: 'Form', component: Form, meta: { title: '填写病情', requiresAuth: true } },
+  { path: '/consultation/summary', name: 'Summary', component: Summary, meta: { title: '病情摘要', requiresAuth: true } },
+  { path: '/consultation/upload', name: 'Upload', component: Upload, meta: { title: '上传资料', requiresAuth: true } },
+  { path: '/consultation/select-type', name: 'SelectType', component: SelectType, meta: { title: '选择会诊类型', requiresAuth: true } },
+  { path: '/consultation/pay', name: 'Pay', component: Pay, meta: { title: '确认支付', requiresAuth: true } },
+  { path: '/consultation/success', name: 'Success', component: Success, meta: { title: '支付成功', requiresAuth: true } },
+  // Legacy route for viewing existing consultation summary with ID
+  { path: '/consultation/:id/summary', component: Summary, meta: { title: '病情摘要', requiresAuth: true } },
   { path: '/consultation/:id/status', name: 'ConsultationStatus', component: Status, meta: { title: '会诊详情', requiresAuth: true } },
   { path: '/consultation/:id/room', name: 'ConsultationRoom', component: Room, meta: { title: '会诊室', requiresAuth: true } },
   { path: '/consultation/query', name: 'Query', component: Query, meta: { title: '查询会诊', requiresAuth: true } },
@@ -41,6 +43,10 @@ const routes: RouteRecordRaw[] = [
   { path: '/meetings', name: 'MyMeetings', component: MyMeetings, meta: { title: '我的会诊', requiresAuth: true } },
   { path: '/evaluation', name: 'EvaluationView', component: EvaluationView, meta: { title: '会诊评价', requiresAuth: true } },
   { path: '/notifications', name: 'NotificationCenter', component: NotificationCenter, meta: { title: '通知中心', requiresAuth: true } },
+  { path: '/departments', name: 'DepartmentList', component: () => import('../views/DepartmentList.vue'), meta: { title: '选择科室', requiresAuth: true } },
+  { path: '/departments/:id/doctors', name: 'DoctorList', component: () => import('../views/DoctorList.vue'), meta: { title: '选择医生', requiresAuth: true } },
+  { path: '/doctors/:id', name: 'DoctorDetail', component: () => import('../views/DoctorDetail.vue'), meta: { title: '医生详情', requiresAuth: true } },
+  { path: '/profile', name: 'Profile', component: () => import('../views/Profile.vue'), meta: { title: '我的', requiresAuth: true } },
 ];
 
 export default routes;

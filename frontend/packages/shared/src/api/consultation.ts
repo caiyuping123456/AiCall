@@ -71,3 +71,17 @@ export function getMeetings() {
 export function queryConsultations() {
   return get('/user/consultation/query');
 }
+
+export interface SubmitConsultationRequest {
+  department: string;
+  type: number;
+  doctorIds: number[];
+  chiefComplaint: string;
+  medicalSummary: string;
+  chatHistory: { role: string; content: string }[];
+  fileIds: number[];
+}
+
+export function submitConsultation(data: SubmitConsultationRequest) {
+  return post<{ consultationId: number }>('/user/registration', data);
+}

@@ -19,28 +19,44 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { showToast } from 'vant';
-import { createDraft } from '@aicall/shared';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
 const router = useRouter();
+const flow = useConsultationFlowStore();
 
-async function startChat() {
-  try {
-    const id = await createDraft('待补充');
-    router.push(`/consultation/${id}/chat`);
-  } catch (e: any) {
-    showToast(e.message || '创建失败');
+onMounted(() => {
+  if (flow.state.step > 1 && !flow.isExpired) {
+    navigateToStep(flow.state.step);
+  } else {
+    flow.reset();
   }
+});
+
+function navigateToStep(step: number) {
+  const routes: Record<number, string> = {
+    2: '/consultation/chat',
+    3: '/consultation/summary',
+    4: '/consultation/upload',
+    5: '/consultation/select-type',
+    6: '/consultation/pay',
+    7: '/consultation/success',
+  };
+  const path = routes[step];
+  if (path) router.push(path);
 }
 
-async function startForm() {
-  try {
-    const id = await createDraft('待补充');
-    router.push(`/consultation/${id}/form`);
-  } catch (e: any) {
-    showToast(e.message || '创建失败');
-  }
+function startChat() {
+  flow.reset();
+  flow.nextStep(2);
+  router.push('/consultation/chat');
+}
+
+function startForm() {
+  flow.reset();
+  flow.nextStep(2);
+  router.push('/consultation/form');
 }
 </script>
 

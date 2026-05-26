@@ -26,37 +26,47 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { formSubmit } from '@aicall/shared';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
-const route = useRoute();
 const router = useRouter();
-const consultationId = Number(route.params.id);
+const flow = useConsultationFlowStore();
 const loading = ref(false);
 
 const form = ref({
-  chiefComplaint: '',
+  chiefComplaint: flow.state.chiefComplaint || '',
   onsetTime: '',
   symptomDescription: '',
   pastHistory: '',
   allergyHistory: '',
 });
 
-async function submit() {
+function submit() {
   if (!form.value.chiefComplaint) {
     showToast('请填写主诉');
     return;
   }
   loading.value = true;
-  try {
-    await formSubmit(consultationId, form.value);
-    router.push(`/consultation/${consultationId}/summary`);
-  } catch (e: any) {
-    showToast(e.message || '提交失败');
-  } finally {
-    loading.value = false;
-  }
+
+  // Store form data in flow store
+  flow.setChiefComplaint(form.value.chiefComplaint);
+
+  // Build a structured text from all form fields for the summary
+  const fullText = [
+    form.value.chiefComplaint ? `主诉：${form.value.chiefComplaint}` : '',
+    form.value.onsetTime ? `起病时间：${form.value.onsetTime}` : '',
+    form.value.symptomDescription ? `症状描述：${form.value.symptomDescription}` : '',
+    form.value.pastHistory ? `既往史：${form.value.pastHistory}` : '',
+    form.value.allergyHistory ? `过敏史：${form.value.allergyHistory}` : '',
+  ].filter(Boolean).join('\n');
+
+  // Pre-fill medical summary with the structured form text
+  flow.setMedicalSummary(fullText);
+
+  loading.value = false;
+  flow.nextStep(3);
+  router.push('/consultation/summary');
 }
 </script>
 

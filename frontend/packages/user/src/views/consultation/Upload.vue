@@ -23,7 +23,7 @@
         </van-cell>
       </van-cell-group>
       <div class="btn-area">
-        <van-button type="primary" block @click="$router.push(`/consultation/${consultationId}/select-type`)">下一步</van-button>
+        <van-button type="primary" block @click="goNext">下一步</van-button>
       </div>
     </div>
   </div>
@@ -31,26 +31,50 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { uploadFile, getUploads, formatOcrLabel } from '@aicall/shared';
+import { uploadFile, getUploads, createDraft, formatOcrLabel } from '@aicall/shared';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
-const route = useRoute();
-const consultationId = Number(route.params.id);
+const router = useRouter();
+const flow = useConsultationFlowStore();
 const uploads = ref<any[]>([]);
 const recentIds = ref(new Set<number>());
+let draftId: number | null = null;
 
-onMounted(loadUploads);
+onMounted(async () => {
+  // Create a minimal draft to get an ID for file uploads
+  if (!draftId) {
+    try {
+      draftId = await createDraft('待补充', flow.state.department || undefined);
+    } catch {
+      // Continue without draft - uploads may not work but flow continues
+    }
+  }
+  if (draftId) {
+    await loadUploads();
+  }
+});
 
 async function loadUploads() {
-  try { uploads.value = await getUploads(consultationId) as any[]; } catch {}
+  if (!draftId) return;
+  try { uploads.value = await getUploads(draftId) as any[]; } catch {}
+}
+
+function goNext() {
+  flow.nextStep(5);
+  router.push('/consultation/select-type');
 }
 
 async function onUpload(file: any) {
+  if (!draftId) {
+    showToast('上传服务暂不可用');
+    return;
+  }
   const files = Array.isArray(file) ? file : [file];
   for (const f of files) {
     try {
-      await uploadFile(consultationId, f.file);
+      await uploadFile(draftId, f.file);
       showToast(`${f.file.name} 上传成功`);
     } catch (e: any) {
       showToast(e.message || '上传失败');
@@ -58,7 +82,8 @@ async function onUpload(file: any) {
   }
   await loadUploads();
   uploads.value.forEach(item => {
-    recentIds.value.add(item);
+    recentIds.value.add(item.id);
+    flow.addFileId(item.id);
     setTimeout(() => recentIds.value.delete(item.id), 3000);
   });
   // Poll for OCR results

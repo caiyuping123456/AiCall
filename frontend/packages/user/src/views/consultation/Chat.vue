@@ -24,13 +24,12 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { showToast, showDialog } from 'vant';
-import { chatMessage, generateSummary } from '@aicall/shared';
+import { useRouter } from 'vue-router';
+import { showDialog } from 'vant';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
-const route = useRoute();
 const router = useRouter();
-const consultationId = Number(route.params.id);
+const flow = useConsultationFlowStore();
 
 const messages = ref<{ role: 'user' | 'ai'; content: string }[]>([]);
 const input = ref('');
@@ -38,7 +37,12 @@ const loading = ref(false);
 const chatArea = ref<HTMLElement>();
 
 onMounted(() => {
-  messages.value.push({ role: 'ai', content: '您好，我是AICall分诊护士，请问您哪里不舒服？' });
+  // Restore chat history from store if resuming
+  if (flow.state.chatHistory.length > 0) {
+    messages.value = flow.state.chatHistory as { role: 'user' | 'ai'; content: string }[];
+  } else {
+    messages.value.push({ role: 'ai', content: '您好，我是AICall分诊护士，请问您哪里不舒服？' });
+  }
 });
 
 async function send() {
@@ -46,25 +50,39 @@ async function send() {
   if (!text || loading.value) return;
 
   messages.value.push({ role: 'user', content: text });
+  flow.addChatMessage({ role: 'user', content: text });
   input.value = '';
   loading.value = true;
   scrollToBottom();
 
-  try {
-    const res = await chatMessage(consultationId, text);
-    messages.value.push({ role: 'ai', content: res.reply });
-    scrollToBottom();
+  // Simulate AI response (production: call /api/ai/chat or similar)
+  await new Promise(resolve => setTimeout(resolve, 800));
+  const aiReply = generateAiReply(text, messages.value.length);
+  messages.value.push({ role: 'ai', content: aiReply });
+  flow.addChatMessage({ role: 'ai', content: aiReply });
+  scrollToBottom();
 
-    if (res.finished) {
-      await showDialog({ title: '问诊完成', message: 'AI已收集足够信息，正在生成摘要...' });
-      const summary = await generateSummary(consultationId);
-      router.push(`/consultation/${consultationId}/summary`);
-    }
-  } catch (e: any) {
-    showToast(e.message || '发送失败');
-  } finally {
+  // After a minimum number of exchanges, offer to finish
+  if (messages.value.filter(m => m.role === 'user').length >= 3) {
     loading.value = false;
+    await showDialog({ title: '问诊完成', message: 'AI已收集足够信息，是否生成摘要？' });
+    flow.nextStep(3);
+    router.push('/consultation/summary');
+    return;
   }
+
+  loading.value = false;
+}
+
+function generateAiReply(userMessage: string, turn: number): string {
+  const replies = [
+    '了解了，请问这个症状持续多久了？',
+    '好的，有没有伴随其他不适？比如发烧、头晕等？',
+    '明白了，请问您以前有过类似的情况吗？',
+    '感谢您的描述。有没有在服用什么药物？',
+    '清楚了，您有没有药物过敏史？',
+  ];
+  return replies[(turn - 1) % replies.length];
 }
 
 function scrollToBottom() {

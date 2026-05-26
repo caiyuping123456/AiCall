@@ -11,13 +11,12 @@
     </van-steps>
     <div class="content">
       <van-cell-group inset>
-        <van-cell title="会诊编号" :value="detail.consultationNo" />
-        <van-cell title="会诊类型" :value="detail.type === 2 ? '多学科MDT会诊' : '单学科会诊'" />
-        <van-cell title="会诊费用" :value="`¥${detail.fee || '0.00'}`" />
+        <van-cell title="会诊类型" :value="consultationTypeLabel" />
+        <van-cell title="会诊费用" :value="feeLabel" />
       </van-cell-group>
       <div class="btn-area">
         <van-button type="primary" block @click="handlePay" :loading="loading">
-          确认支付 ¥{{ detail.fee || '0.00' }}
+          确认支付 {{ feeLabel }}
         </van-button>
       </div>
     </div>
@@ -25,33 +24,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { showToast } from 'vant';
-import { getConsultationDetail, payConsultation } from '@aicall/shared';
+import { submitConsultation } from '@aicall/shared';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
-const route = useRoute();
 const router = useRouter();
-const consultationId = Number(route.params.id);
-const detail = reactive<any>({});
+const flow = useConsultationFlowStore();
 const loading = ref(false);
 
-onMounted(async () => {
-  try {
-    const res = await getConsultationDetail(consultationId);
-    Object.assign(detail, res);
-  } catch (e: any) {
-    showToast(e.message || '获取详情失败');
-  }
-});
+const consultationTypeLabel = computed(() =>
+  flow.state.selectedType === 2 ? '多学科MDT会诊' : '单学科会诊'
+);
+
+const feeCents = computed(() =>
+  flow.state.selectedType === 2 ? 1500.00 : 500.00
+);
+
+const feeLabel = computed(() => `¥${feeCents.value.toFixed(2)}`);
 
 async function handlePay() {
+  if (!flow.state.chiefComplaint) {
+    showToast('缺少主诉信息，请返回重新填写');
+    return;
+  }
+
   loading.value = true;
   try {
-    await payConsultation(consultationId);
-    router.push(`/consultation/${consultationId}/success`);
+    await submitConsultation({
+      department: flow.state.department || '未指定',
+      type: flow.state.selectedType || 1,
+      doctorIds: flow.state.selectedDoctorIds,
+      chiefComplaint: flow.state.chiefComplaint,
+      medicalSummary: flow.state.medicalSummary,
+      chatHistory: flow.state.chatHistory,
+      fileIds: flow.state.uploadedFileIds,
+    });
+    flow.nextStep(7);
+    router.push('/consultation/success');
   } catch (e: any) {
-    showToast(e.message || '支付失败');
+    showToast(e.message || '提交失败');
   } finally {
     loading.value = false;
   }

@@ -10,6 +10,17 @@
   </div>
 </template>
 
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
+
+const flow = useConsultationFlowStore();
+
+onMounted(() => {
+  flow.reset();
+});
+</script>
+
 <style scoped>
 .page { min-height: 100vh; background: #f7f8fa; }
 .success-area { display: flex; flex-direction: column; align-items: center; padding-top: 80px; }

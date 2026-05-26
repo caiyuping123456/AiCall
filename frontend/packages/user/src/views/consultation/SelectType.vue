@@ -19,21 +19,19 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router';
-import { showToast } from 'vant';
-import { calculateFee } from '@aicall/shared';
+import { useRouter } from 'vue-router';
+import { useConsultationFlowStore } from '@/stores/consultationFlow';
 
-const route = useRoute();
 const router = useRouter();
-const consultationId = Number(route.params.id);
+const flow = useConsultationFlowStore();
 
-async function select(type: number) {
-  try {
-    await calculateFee(consultationId, type);
-    router.push(`/consultation/${consultationId}/pay`);
-  } catch (e: any) {
-    showToast(e.message || '操作失败');
-  }
+function select(type: number) {
+  flow.setSelectedType(type);
+  // Navigate to pay - doctor selection will be done via department/doctor list
+  // For now, clear any previous doctor selection
+  flow.setSelectedDoctorIds([]);
+  flow.nextStep(6);
+  router.push('/consultation/pay');
 }
 </script>
 
