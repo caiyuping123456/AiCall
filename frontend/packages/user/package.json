@@ -14,7 +14,8 @@
     "vue-router": "^4.4.0",
     "trtc-js-sdk": "^4.15.0",
     "vant": "^4.9.0",
-    "@aicall/shared": "workspace:*"
+    "@aicall/shared": "workspace:*",
+    "pinia": "^2.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.0",
