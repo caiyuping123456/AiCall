@@ -29,11 +29,24 @@ instance.interceptors.response.use(
     }
     const { code, message, data } = response.data;
     if (code !== 200) {
+      if (code === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('patientId');
+        localStorage.removeItem('doctorId');
+        window.location.href = '/login';
+      }
       return Promise.reject(new Error(message || '请求失败'));
     }
     return data as any;
   },
   (error) => {
+    if (error.response?.status === 401 || error.response?.data?.code === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('patientId');
+      localStorage.removeItem('doctorId');
+      window.location.href = '/login';
+      return Promise.reject(new Error('会话已过期，请重新登录'));
+    }
     const message = error.response?.data?.message || error.message || '网络异常';
     return Promise.reject(new Error(message));
   },

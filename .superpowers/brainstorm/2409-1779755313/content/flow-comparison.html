@@ -1,0 +1,67 @@
+<h2>用户挂号流程：旧 vs 新</h2>
+<p class="subtitle">对比前后端数据交互的变化</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">旧流程：多次后端写入 + 多次通知</div>
+    <div class="mockup-body">
+      <div style="display:flex;flex-direction:column;gap:6px;padding:16px;">
+        <div style="background:#ffebee;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;">
+          <span>Start</span><span style="color:#c62828;font-size:12px;">前端</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;color:#999;">⬇ API: 创建草稿</div>
+        <div style="background:#fff3e0;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;">
+          <span>Chat / Form</span><span style="color:#e65100;font-size:12px;">🔔 通知医生</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;color:#999;">⬇ API: 更新摘要</div>
+        <div style="background:#fff3e0;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;">
+          <span>Upload</span><span style="color:#e65100;font-size:12px;">🔔 通知医生</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;color:#999;">⬇ API: 上传文件</div>
+        <div style="background:#fff3e0;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;">
+          <span>Select Type</span><span style="color:#e65100;font-size:12px;">🔔 通知医生</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;color:#999;">⬇ API: 支付</div>
+        <div style="background:#e8f5e9;padding:8px 12px;border-radius:6px;">
+          <span>Success</span>
+        </div>
+      </div>
+      <div style="text-align:center;padding:8px;color:#c62828;font-weight:bold;">❌ 医生收到多条重复通知</div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">新流程：单次后端写入 + 单次通知</div>
+    <div class="mockup-body">
+      <div style="display:flex;flex-direction:column;gap:6px;padding:16px;">
+        <div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;">
+          <span>Start</span>
+          <span style="color:#1565c0;font-size:12px;margin-left:8px;">→ Pinia state</span>
+        </div>
+        <div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;">
+          <span>Chat / Form / Summary</span>
+          <span style="color:#1565c0;font-size:12px;margin-left:8px;">→ Pinia state</span>
+        </div>
+        <div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;">
+          <span>Upload</span>
+          <span style="color:#1565c0;font-size:12px;margin-left:8px;">→ 临时存储 (返回 fileId)</span>
+        </div>
+        <div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;">
+          <span>Select Type</span>
+          <span style="color:#1565c0;font-size:12px;margin-left:8px;">→ Pinia state</span>
+        </div>
+        <div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;">
+          <span>Pay</span>
+          <span style="color:#1565c0;font-size:12px;margin-left:8px;">→ Pinia state</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;padding:4px;background:#fff3e0;border-radius:6px;margin:4px 0;">
+          ⬇ <b>POST /consultations</b>（一次调用）
+        </div>
+        <div style="background:#e8f5e9;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;">
+          <span>Success</span><span style="color:#2e7d32;font-size:12px;">🔔 仅1条通知</span>
+        </div>
+      </div>
+      <div style="text-align:center;padding:8px;color:#2e7d32;font-weight:bold;">✅ 医生只收到1条通知</div>
+    </div>
+  </div>
+</div>

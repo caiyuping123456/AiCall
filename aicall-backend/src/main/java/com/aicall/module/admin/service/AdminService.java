@@ -8,9 +8,12 @@ import com.aicall.module.admin.dto.LoginRequest;
 import com.aicall.module.admin.dto.LoginResponse;
 import com.aicall.module.admin.entity.Admin;
 import com.aicall.module.admin.mapper.AdminMapper;
+import com.aicall.module.common.service.RedisSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +21,7 @@ public class AdminService {
     private final AdminMapper adminMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisSessionService redisSessionService;
 
     public LoginResponse login(LoginRequest request) {
         Admin admin = adminMapper.findByUsername(request.getUsername());
@@ -28,6 +32,8 @@ public class AdminService {
             throw BusinessException.fail("账号已禁用");
         }
         String token = jwtTokenProvider.generateToken(admin.getId(), admin.getUsername(), "ADMIN");
+        redisSessionService.createSession(admin.getId(), "ADMIN",
+                Map.of("adminId", admin.getId(), "username", admin.getUsername()));
         return new LoginResponse(token, admin.getUsername(), admin.getName());
     }
 
@@ -39,6 +45,8 @@ public class AdminService {
         if (!Integer.valueOf(1).equals(admin.getStatus())) {
             throw BusinessException.fail("账号已禁用");
         }
+        redisSessionService.createSession(admin.getId(), "ADMIN",
+                Map.of("adminId", admin.getId(), "username", admin.getUsername()));
         AdminLoginResponse response = new AdminLoginResponse();
         response.setToken(jwtTokenProvider.generateToken(admin.getId(), admin.getUsername(), "ADMIN"));
         response.setAdminId(admin.getId());

@@ -4,6 +4,7 @@ import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.aicall.common.exception.BusinessException;
 import com.aicall.infrastructure.security.JwtTokenProvider;
+import com.aicall.module.common.service.RedisSessionService;
 import com.aicall.module.user.dto.RegisterRequest;
 import com.aicall.module.user.dto.UserLoginRequest;
 import com.aicall.module.user.dto.UserLoginResponse;
@@ -12,11 +13,14 @@ import com.aicall.module.user.mapper.PatientMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class UserAuthService {
     private final PatientMapper patientMapper;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisSessionService redisSessionService;
 
     public void register(RegisterRequest request) {
         Patient existing = patientMapper.findByPhone(request.getPhone());
@@ -47,6 +51,8 @@ public class UserAuthService {
         }
 
         String token = jwtTokenProvider.generateToken(patient.getId(), patient.getPhone(), "PATIENT");
-        return new UserLoginResponse(token, patient.getId(), patient.getPhone(), patient.getProfileComplete());
+        redisSessionService.createSession(patient.getId(), "PATIENT",
+                Map.of("patientId", patient.getId(), "phone", patient.getPhone(), "profileComplete", patient.getProfileComplete()));
+        return new UserLoginResponse(token, patient.getId(), patient.getName(), patient.getPhone(), patient.getProfileComplete());
     }
 }
