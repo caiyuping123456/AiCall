@@ -10,6 +10,12 @@ frontend/pnpm-lock.yaml
 frontend/packages/*/node_modules/
 frontend/packages/*/auto-imports.d.ts
 frontend/packages/*/components.d.ts
+frontend/packages/*/dist/
+frontend/packages/shared/src/**/*.js
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Docker
 docker/
